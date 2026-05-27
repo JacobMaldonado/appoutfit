@@ -1,0 +1,315 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
+import '../../core/di/service_locator.dart';
+import '../../core/theme/app_theme.dart';
+import '../../data/models/clothing_item.dart';
+import '../../data/repositories/wardrobe_repository.dart';
+import '../../data/services/auth/auth_service.dart';
+import '../../data/services/storage/storage_service.dart';
+
+class AddItemScreen extends StatefulWidget {
+  const AddItemScreen({super.key});
+
+  @override
+  State<AddItemScreen> createState() => _AddItemScreenState();
+}
+
+class _AddItemScreenState extends State<AddItemScreen> {
+  ClothingType _selectedType = ClothingType.shirt;
+  ClothingPattern _selectedPattern = ClothingPattern.solid;
+  String _selectedColorHex = '#36454F';
+  File? _photoFile;
+  bool _loading = false;
+
+  final _picker = ImagePicker();
+  final _uuid = const Uuid();
+
+  static const _colorOptions = [
+    '#36454F', '#ECBDA4', '#F0E0C8', '#FFFFFF',
+    '#000000', '#C9778A', '#7A9E9F', '#D4A5A5',
+    '#8B7355', '#F5DEB3', '#708090', '#E8D5C4',
+  ];
+
+  Future<void> _pickPhoto() async {
+    final xfile = await _picker.pickImage(source: ImageSource.gallery);
+    if (xfile != null) setState(() => _photoFile = File(xfile.path));
+  }
+
+  Future<void> _save() async {
+    setState(() => _loading = true);
+    try {
+      final authService = sl<AuthService>();
+      final wardrobeRepo = sl<WardrobeRepository>();
+      final storageService = sl<StorageService>();
+      final userId = authService.currentUser?.id ?? '';
+      final itemId = _uuid.v4();
+
+      String? photoUrl;
+      if (_photoFile != null) {
+        photoUrl = await storageService.uploadClothingPhoto(
+          userId: userId,
+          itemId: itemId,
+          file: _photoFile!,
+        );
+      }
+
+      final item = ClothingItem(
+        id: itemId,
+        type: _selectedType,
+        colorHex: _selectedColorHex,
+        pattern: _selectedPattern,
+        photoUrl: photoUrl,
+        createdAt: DateTime.now(),
+      );
+
+      await wardrobeRepo.addItem(userId, item);
+      if (mounted) context.pop();
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('New Acquisition')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _PhotoPicker(
+              photoFile: _photoFile,
+              colorHex: _selectedColorHex,
+              onTap: _pickPhoto,
+            ),
+            const SizedBox(height: 24),
+            _SectionLabel(label: 'CATEGORY'),
+            const SizedBox(height: 8),
+            _TypeSelector(
+              selected: _selectedType,
+              onChanged: (t) => setState(() => _selectedType = t),
+            ),
+            const SizedBox(height: 24),
+            _SectionLabel(label: 'PATTERN'),
+            const SizedBox(height: 8),
+            _PatternSelector(
+              selected: _selectedPattern,
+              onChanged: (p) => setState(() => _selectedPattern = p),
+            ),
+            const SizedBox(height: 24),
+            _SectionLabel(label: 'COLOR'),
+            const SizedBox(height: 8),
+            _ColorSelector(
+              colorOptions: _colorOptions,
+              selected: _selectedColorHex,
+              onChanged: (c) => setState(() => _selectedColorHex = c),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _loading ? null : _save,
+              child: _loading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('ADD TO COLLECTION'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({
+    required this.photoFile,
+    required this.colorHex,
+    required this.onTap,
+  });
+
+  final File? photoFile;
+  final String colorHex;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppTheme.champagne.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: photoFile != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.file(photoFile!, fit: BoxFit.cover),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.surfaceCard,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.photo_camera_outlined,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'UPLOAD PHOTO',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'or we\'ll use a color swatch',
+                    style: TextStyle(fontSize: 11, color: AppTheme.outline),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.outline,
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+}
+
+class _TypeSelector extends StatelessWidget {
+  const _TypeSelector({required this.selected, required this.onChanged});
+
+  final ClothingType selected;
+  final ValueChanged<ClothingType> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<ClothingType>(
+      initialValue: selected,
+      decoration: const InputDecoration(),
+      items: ClothingType.values
+          .map((t) => DropdownMenuItem(value: t, child: Text(t.label)))
+          .toList(),
+      onChanged: (v) => v != null ? onChanged(v) : null,
+    );
+  }
+}
+
+class _PatternSelector extends StatelessWidget {
+  const _PatternSelector({required this.selected, required this.onChanged});
+
+  final ClothingPattern selected;
+  final ValueChanged<ClothingPattern> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      children: ClothingPattern.values.map((p) {
+        final isSelected = p == selected;
+        return ChoiceChip(
+          label: Text(p.name),
+          selected: isSelected,
+          onSelected: (_) => onChanged(p),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ColorSelector extends StatelessWidget {
+  const _ColorSelector({
+    required this.colorOptions,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<String> colorOptions;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: colorOptions.map((hex) {
+        final isSelected = hex == selected;
+        final color = _hexToColor(hex);
+        return GestureDetector(
+          onTap: () => onChanged(hex),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: hex == '#FFFFFF' ? AppTheme.outlineVariant : color,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.4),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: isSelected
+                ? Icon(
+                    Icons.check,
+                    size: 16,
+                    color: color.computeLuminance() > 0.5
+                        ? Colors.black87
+                        : Colors.white,
+                  )
+                : null,
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+Color _hexToColor(String hex) {
+  final h = hex.replaceAll('#', '');
+  return Color(int.parse('FF$h', radix: 16));
+}

@@ -1,0 +1,61 @@
+# ── Flutter / Dart ─────────────────────────────────────────────────────────────
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/coverage/
+app/.dart_tool/package_config.json
+
+# ── Android ────────────────────────────────────────────────────────────────────
+app/android/key.properties
+app/android/local.properties
+app/android/app/google-services.json
+app/android/gradle/wrapper/gradle-wrapper.jar
+app/android/.gradle/
+app/android/captures/
+app/android/**/*.iml
+app/android/.cxx/
+
+# ── iOS ────────────────────────────────────────────────────────────────────────
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Runner.xcworkspace/
+app/ios/GoogleService-Info.plist
+app/ios/ExportOptions.plist
+
+# ── Firebase ───────────────────────────────────────────────────────────────────
+app/lib/firebase_options.dart
+**/google-services.json
+**/GoogleService-Info.plist
+.firebaserc
+firebase.json
+.firebase/
+
+# ── macOS ──────────────────────────────────────────────────────────────────────
+app/macos/Flutter/GeneratedPluginRegistrant.swift
+app/macos/Flutter/ephemeral/
+
+# ── Web ────────────────────────────────────────────────────────────────────────
+app/web/firebase-messaging-sw.js
+
+# ── IDE / OS ───────────────────────────────────────────────────────────────────
+.DS_Store
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/settings.json
+.vscode/*.code-workspace
+
+# ── Secrets / environment ──────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.keystore
+*.jks
+upload-keystore.jks

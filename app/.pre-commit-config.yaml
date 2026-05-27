@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: flutter-analyze
+        name: Flutter Analyze
+        entry: bash -c 'cd app && flutter analyze'
+        language: system
+        pass_filenames: false
+
+      - id: dart-fix-check
+        name: Dart Fix (dead-code check)
+        entry: bash -c 'cd app && dart fix --dry-run'
+        language: system
+        pass_filenames: false
+
+      - id: flutter-test-coverage
+        name: Flutter Test + Coverage Check
+        entry: bash -c 'cd app && flutter test --coverage && bash scripts/check_coverage.sh'
+        language: system
+        pass_filenames: false

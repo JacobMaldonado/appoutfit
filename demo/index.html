@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Clo·set — Your Style Assistant</title>
+  <style>
+/* =============================================
+   Clo·set — Global Styles
+   ============================================= */
+:root {
+  --rose:        #F9E8E8;
+  --cream:       #FAF6F1;
+  --mauve:       #C9788A;
+  --mauve-dark:  #A05870;
+  --mauve-light: #E8B4BE;
+  --charcoal:    #2D2D2D;
+  --gray:        #9A9A9A;
+  --white:       #FFFFFF;
+  --border:      #EDE0DD;
+  --shadow:      rgba(201,120,138,0.13);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #EDD8DC;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: var(--cream);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop phone frame */
+@media (min-width: 500px) {
+  body {
+    padding: 32px 0;
+    background: linear-gradient(145deg, #F0D0D8 0%, #D8D0F0 100%);
+  }
+  #app {
+    min-height: calc(100vh - 64px);
+    border-radius: 36px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.22), 0 0 0 10px rgba(255,255,255,0.25);
+    overflow: hidden;
+  }
+  .bottom-nav { border-radius: 0 0 36px 36px; }
+}
+
+/* === APP HEADER === */
+.app-header {
+  background: var(--white);
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+}
+.app-header h1 { font-size: 19px; font-weight: 800; color: var(--charcoal); letter-spacing: -0.4px; }
+.app-header .subtitle { font-size: 11px; color: var(--gray); margin-top: 1px; }
+.header-add-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--mauve);
+  color: var(--white);
+  border: none; cursor: pointer;
+  font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.header-add-btn:hover { background: var(--mauve-dark); }
+
+/* === SCREENS === */
+.screen {
+  display: none;
+  padding: 16px;
+  padding-bottom: 88px;
+  flex: 1;
+}
+.screen.active {
+  display: block;
+  animation: fadeInUp 0.22s ease-out;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === BOTTOM NAV === */
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 20;
+}
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 9px 4px 8px;
+  text-decoration: none;
+  color: var(--gray);
+  font-size: 10px; font-weight: 600;
+  gap: 3px;
+  transition: color 0.15s;
+  cursor: pointer;
+  border: none; background: none;
+}
+.nav-item svg { width: 22px; height: 22px; transition: transform 0.15s; }
+.nav-item.active, .nav-item:hover { color: var(--mauve); }
+.nav-item.active svg { transform: scale(1.1); }
+
+/* === BUTTONS === */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 12px 22px;
+  border-radius: 50px; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 700;
+  transition: all 0.15s; letter-spacing: 0.1px;
+}
+.btn-primary { background: var(--mauve); color: var(--white); }
+.btn-primary:hover { background: var(--mauve-dark); transform: translateY(-1px); box-shadow: 0 4px 14px var(--shadow); }
+.btn-outline { background: transparent; color: var(--mauve); border: 1.5px solid var(--mauve); }
+.btn-outline:hover { background: var(--rose); }
+.btn-ghost { background: var(--rose); color: var(--mauve-dark); }
+.btn-sm { padding: 7px 14px; font-size: 12px; }
+
+/* === BADGES === */
+.badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 50px; font-size: 11px; font-weight: 700;
+  background: var(--rose); color: var(--mauve-dark);
+}
+.badge-work    { background: #E8EEF9; color: #4A6FA5; }
+.badge-casual  { background: #E8F4E8; color: #3A7A46; }
+.badge-brunch  { background: #FFF3E0; color: #B05A00; }
+.badge-night   { background: #2A2A38; color: #C9B4E8; }
+.badge-active  { background: #E8F9F5; color: #2A7A62; }
+
+/* === SECTION TITLES === */
+.section-title {
+  font-size: 11px; font-weight: 800;
+  color: var(--gray);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin: 14px 0 8px;
+}
+
+/* === EMPTY STATE === */
+.empty-state { text-align: center; padding: 48px 24px; color: var(--gray); }
+.empty-state .empty-icon { font-size: 52px; margin-bottom: 14px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--charcoal); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; line-height: 1.55; }
+
+/* === WARDROBE GRID === */
+.filter-tabs {
+  display: flex; gap: 6px; overflow-x: auto;
+  padding: 4px 0 10px; scrollbar-width: none;
+}
+.filter-tabs::-webkit-scrollbar { display: none; }
+.filter-tab {
+  flex-shrink: 0; padding: 6px 14px;
+  border-radius: 50px; border: 1.5px solid var(--border);
+  background: var(--white); color: var(--charcoal);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-tab.active { background: var(--mauve); border-color: var(--mauve); color: var(--white); }
+.filter-tab:hover:not(.active) { border-color: var(--mauve); color: var(--mauve); }
+
+.wardrobe-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.wardrobe-item {
+  background: var(--white); border-radius: 14px;
+  padding: 10px 6px 8px; text-align: center;
+  box-shadow: 0 1px 8px var(--shadow);
+  position: relative; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.wardrobe-item:hover { transform: translateY(-3px); box-shadow: 0 4px 16px var(--shadow); }
+.wardrobe-item svg { width: 54px; height: 64px; }
+.wardrobe-item .item-name {
+  font-size: 10px; font-weight: 700; color: var(--charcoal);
+  margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wardrobe-item .item-type { font-size: 9px; color: var(--gray); margin-top: 1px; }
+.delete-btn {
+  position: absolute; top: 5px; right: 5px;
+  background: rgba(255,255,255,0.9); border: none; cursor: pointer;
+  color: var(--gray); font-size: 12px; line-height: 1;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.wardrobe-item:hover .delete-btn { opacity: 1; }
+
+/* === MOOD PICKER === */
+.mood-picker { display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; }
+.mood-picker::-webkit-scrollbar { display: none; }
+.mood-chip {
+  flex-shrink: 0; padding: 8px 14px;
+  border-radius: 50px; border: 1.5px solid var(--border);
+  background: var(--white); font-size: 13px; cursor: pointer;
+  transition: all 0.15s; color: var(--charcoal); font-weight: 500;
+}
+.mood-chip.active { background: var(--mauve); border-color: var(--mauve); color: var(--white); font-weight: 700; }
+.mood-chip:hover:not(.active) { border-color: var(--mauve-light); background: var(--rose); }
+
+/* === OUTFIT CARDS === */
+.outfit-card {
+  background: var(--white); border-radius: 20px;
+  padding: 14px; margin-bottom: 14px;
+  box-shadow: 0 2px 14px var(--shadow);
+  animation: fadeInUp 0.3s ease-out both;
+}
+.outfit-card:nth-child(1) { animation-delay: 0s; }
+.outfit-card:nth-child(2) { animation-delay: 0.07s; }
+.outfit-card:nth-child(3) { animation-delay: 0.14s; }
+.outfit-card:nth-child(4) { animation-delay: 0.21s; }
+
+.outfit-svgs {
+  display: flex; gap: 0; align-items: flex-end; justify-content: center;
+  background: var(--rose); border-radius: 14px;
+  padding: 14px 10px 8px; min-height: 100px;
+  margin-bottom: 12px; overflow: hidden;
+}
+.outfit-svg-item { flex-shrink: 0; }
+.outfit-svg-item svg { width: 56px; height: 66px; display: block; }
+.outfit-svg-item + .outfit-svg-item { margin-left: -8px; }
+.outfit-svg-layer { opacity: 0.82; }
+.outfit-svg-layer svg { width: 58px; height: 68px; }
+
+.outfit-meta {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 8px;
+}
+.color-palette { display: flex; gap: 4px; align-items: center; }
+.palette-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+.save-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 24px; line-height: 1; padding: 0;
+  color: var(--mauve-light); transition: color 0.15s, transform 0.15s;
+}
+.save-btn.saved { color: var(--mauve); }
+.save-btn:hover { transform: scale(1.2); }
+
+.outfit-items { display: flex; flex-wrap: wrap; gap: 5px; }
+.item-pill {
+  background: var(--cream); border: 1px solid var(--border);
+  border-radius: 50px; padding: 3px 10px; font-size: 11px; color: var(--charcoal);
+}
+
+/* === FAVORITES === */
+.fav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fav-card {
+  background: var(--white); border-radius: 16px; padding: 10px;
+  box-shadow: 0 1px 8px var(--shadow); position: relative;
+}
+.fav-card .mini-svgs {
+  display: flex; justify-content: center; align-items: flex-end;
+  background: var(--rose); border-radius: 10px; padding: 10px 6px 6px;
+  min-height: 70px; margin-bottom: 8px; overflow: hidden;
+}
+.fav-card .mini-svgs svg { width: 36px; height: 44px; display: block; }
+.fav-card .mini-svgs > div + div { margin-left: -6px; }
+.fav-card .fav-label { font-size: 10px; font-weight: 700; color: var(--charcoal); }
+.fav-card .fav-mood { font-size: 9px; color: var(--gray); margin-top: 2px; }
+.unsave-btn {
+  position: absolute; top: 7px; right: 7px;
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--mauve);
+}
+
+/* === HISTORY === */
+.history-batch {
+  background: var(--white); border-radius: 16px; padding: 14px;
+  margin-bottom: 12px; box-shadow: 0 1px 8px var(--shadow);
+}
+.batch-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.batch-time { font-size: 11px; color: var(--gray); }
+.batch-thumbs {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+}
+.batch-thumbs::-webkit-scrollbar { display: none; }
+.outfit-thumb {
+  flex-shrink: 0; background: var(--rose); border-radius: 10px;
+  padding: 8px 6px; display: flex; align-items: flex-end;
+  gap: 0; overflow: hidden;
+}
+.outfit-thumb svg { width: 28px; height: 34px; display: block; }
+.outfit-thumb > div + div { margin-left: -5px; }
+
+/* === SPLASH SCREEN === */
+#screen-splash { padding: 0; }
+.splash {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 100vh; padding: 40px 28px;
+  text-align: center;
+  background: linear-gradient(160deg, #FAF0F2 0%, var(--cream) 70%);
+}
+.splash-logo { font-size: 72px; margin-bottom: 10px; line-height: 1; }
+.splash-title {
+  font-size: 36px; font-weight: 900; color: var(--charcoal);
+  letter-spacing: -1.5px; margin-bottom: 10px; line-height: 1;
+}
+.splash-title span { color: var(--mauve); }
+.splash-tagline {
+  font-size: 15px; color: var(--gray);
+  max-width: 280px; line-height: 1.6; margin-bottom: 32px;
+}
+.features-list {
+  list-style: none; margin-bottom: 36px; width: 100%; max-width: 300px;
+}
+.features-list li {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px; color: var(--charcoal); padding: 9px 0;
+  border-bottom: 1px solid var(--border); text-align: left;
+}
+.features-list li:last-child { border: none; }
+.feature-icon {
+  width: 34px; height: 34px; background: var(--rose);
+  border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; font-size: 17px; flex-shrink: 0;
+}
+
+/* === ADD ITEM OVERLAY === */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 50;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  background: var(--white); border-radius: 24px 24px 0 0;
+  padding: 16px 20px 32px; width: 100%; max-width: 430px;
+  max-height: 92vh; overflow-y: auto;
+  animation: slideUp 0.22s ease-out;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.sheet-handle {
+  width: 38px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 0 auto 14px;
+}
+.sheet-title { font-size: 17px; font-weight: 800; color: var(--charcoal); margin-bottom: 14px; }
+
+/* === FORM ELEMENTS === */
+.form-group { margin-bottom: 13px; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 800;
+  color: var(--gray); margin-bottom: 5px;
+  text-transform: uppercase; letter-spacing: 0.6px;
+}
+.form-group input, .form-group select {
+  width: 100%; padding: 11px 14px;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  font-size: 14px; color: var(--charcoal); background: var(--cream);
+  outline: none; transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--mauve); }
+.color-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
+.color-swatch {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2.5px solid transparent; cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.selected { border-color: var(--charcoal); transform: scale(1.15); }
+
+#svg-preview {
+  background: var(--rose); border-radius: 14px;
+  padding: 14px; text-align: center; margin-bottom: 14px;
+  min-height: 80px; display: flex; align-items: center; justify-content: center;
+}
+#svg-preview svg { width: 72px; height: 86px; }
+
+/* === TOAST === */
+.toast {
+  position: fixed; bottom: 88px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--charcoal); color: var(--white);
+  padding: 10px 20px; border-radius: 50px;
+  font-size: 13px; font-weight: 500; z-index: 100;
+  opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.toast.show { opacity: 1; }
+
+/* === GENERATE BUTTON === */
+#generate-btn {
+  width: 100%; margin: 10px 0 4px; font-size: 15px;
+  padding: 14px; letter-spacing: 0.2px;
+}
+
+/* Scrollbar style for webkit */
+::-webkit-scrollbar { width: 0; height: 0; }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- APP HEADER -->
+  <header class="app-header" id="app-header" style="display:none">
+    <div>
+      <h1 id="header-title"></h1>
+      <p class="subtitle" id="header-subtitle"></p>
+    </div>
+    <div id="header-action"></div>
+  </header>
+
+  <!-- ══════════ SCREEN: SPLASH ══════════ -->
+  <section id="screen-splash" class="screen active">
+    <div class="splash">
+      <div class="splash-logo">👗</div>
+      <h1 class="splash-title">Clo<span>·</span>set</h1>
+      <p class="splash-tagline">Rediscover your wardrobe. Get outfit ideas tailored to your mood, every day.</p>
+      <ul class="features-list">
+        <li><span class="feature-icon">✨</span> Smart outfit combinations</li>
+        <li><span class="feature-icon">👗</span> Organize your wardrobe</li>
+        <li><span class="feature-icon">♥</span> Save your favourite looks</li>
+        <li><span class="feature-icon">🕐</span> Browse your outfit history</li>
+      </ul>
+      <button class="btn btn-primary" style="width:100%;max-width:280px;padding:16px 32px;font-size:16px" onclick="navigate('suggest')">
+        Get Started →
+      </button>
+      <p style="margin-top:14px;font-size:12px;color:var(--gray)">Demo wardrobe pre-loaded with 18 items ✓</p>
+    </div>
+  </section>
+
+  <!-- ══════════ SCREEN: SUGGEST ══════════ -->
+  <section id="screen-suggest" class="screen" style="display:none">
+    <p class="section-title" style="margin-top:2px">How are you feeling today?</p>
+    <div class="mood-picker" id="mood-picker">
+      <button class="mood-chip active" data-mood="casual">😊 Casual</button>
+      <button class="mood-chip" data-mood="work">💼 Work</button>
+      <button class="mood-chip" data-mood="brunch">☕ Brunch</button>
+      <button class="mood-chip" data-mood="night">🌙 Night Out</button>
+      <button class="mood-chip" data-mood="active">🏃 Active</button>
+    </div>
+    <button class="btn btn-primary" id="generate-btn">✨ Suggest Outfits</button>
+    <div id="outfits-container" style="margin-top:6px"></div>
+  </section>
+
+  <!-- ══════════ SCREEN: WARDROBE ══════════ -->
+  <section id="screen-wardrobe" class="screen" style="display:none">
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all">All</button>
+      <button class="filter-tab" data-filter="top">Tops</button>
+      <button class="filter-tab" data-filter="bottom">Bottoms</button>
+      <button class="filter-tab" data-filter="fullbody">Full Body</button>
+      <button class="filter-tab" data-filter="layer">Layers</button>
+    </div>
+    <div class="wardrobe-grid" id="wardrobe-grid"></div>
+  </section>
+
+  <!-- ══════════ SCREEN: FAVORITES ══════════ -->
+  <section id="screen-favorites" class="screen" style="display:none">
+    <div id="favorites-container"></div>
+  </section>
+
+  <!-- ══════════ SCREEN: HISTORY ══════════ -->
+  <section id="screen-history" class="screen" style="display:none">
+    <div id="history-top-bar" style="display:flex;justify-content:flex-end;margin-bottom:8px"></div>
+    <div id="history-container"></div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottom-nav" style="display:none">
+    <button class="nav-item" data-screen="wardrobe" onclick="navigate('wardrobe')">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M3 17L12 8L21 17" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="8" x2="12" y2="5" stroke-linecap="round"/>
+        <circle cx="12" cy="4" r="1.5" fill="currentColor" stroke="none"/>
+        <line x1="3" y1="17" x2="21" y2="17" stroke-linecap="round"/>
+        <line x1="3" y1="20" x2="21" y2="20" stroke-linecap="round" opacity="0.4"/>
+      </svg>
+      Wardrobe
+    </button>
+    <button class="nav-item active" data-screen="suggest" onclick="navigate('suggest')">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M12 3L13.8 9.2L20 11L13.8 12.8L12 19L10.2 12.8L4 11L10.2 9.2Z" stroke-linejoin="round"/>
+        <path d="M19 3L19.9 5.1L22 6L19.9 6.9L19 9L18.1 6.9L16 6L18.1 5.1Z" opacity="0.6" stroke-linejoin="round"/>
+      </svg>
+      Suggest
+    </button>
+    <button class="nav-item" data-screen="favorites" onclick="navigate('favorites')">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-linejoin="round"/>
+      </svg>
+      Saved
+    </button>
+    <button class="nav-item" data-screen="history" onclick="navigate('history')">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 15.5 15.5" stroke-linecap="round"/>
+      </svg>
+      History
+    </button>
+  </nav>
+
+</div><!-- /#app -->
+
+<div id="toast" class="toast"></div>
+
+<!-- ADD ITEM OVERLAY -->
+<div id="add-overlay" class="overlay" style="display:none" onclick="overlayClickOutside(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Item to Wardrobe</div>
+    <div id="svg-preview">
+      <span style="color:var(--gray);font-size:13px">Preview</span>
+    </div>
+    <form id="add-form" onsubmit="submitAddItem(event)">
+      <div class="form-group">
+        <label>Item Name</label>
+        <input type="text" id="item-name" placeholder="e.g. Floral Summer Dress" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="item-type" onchange="updateAddPreview()">
+          <optgroup label="Tops">
+            <option value="shirt">Shirt</option>
+            <option value="blouse">Blouse</option>
+            <option value="tshirt">T-Shirt</option>
+            <option value="tank">Tank Top</option>
+            <option value="sweater">Sweater</option>
+          </optgroup>
+          <optgroup label="Bottoms">
+            <option value="pants">Pants</option>
+            <option value="jeans">Jeans</option>
+            <option value="skirt">Skirt</option>
+            <option value="shorts">Shorts</option>
+          </optgroup>
+          <optgroup label="Full Body">
+            <option value="dress">Dress</option>
+            <option value="jumpsuit">Jumpsuit</option>
+          </optgroup>
+          <optgroup label="Layers">
+            <option value="jacket">Jacket</option>
+            <option value="coat">Coat</option>
+            <option value="cardigan">Cardigan</option>
+            <option value="blazer">Blazer</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Pattern</label>
+        <select id="item-pattern" onchange="updateAddPreview()">
+          <option value="solid">Solid</option>
+          <option value="striped">Striped</option>
+          <option value="floral">Floral</option>
+          <option value="plaid">Plaid</option>
+          <option value="printed">Printed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div id="color-swatches" class="color-row"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="button" class="btn btn-outline" style="flex:1" onclick="closeAddOverlay()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="flex:2">Add to Wardrobe ✓</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// =============================================
+// Clo·set — Database & localStorage helpers
+// =============================================
+
+const DB_KEY      = 'closet_wardrobe';
+const OUTFITS_KEY = 'closet_outfits';
+const HISTORY_KEY = 'closet_history';
+
+const TYPE_COVERAGE = {
+  shirt: 'top', blouse: 'top', tshirt: 'top', tank: 'top', sweater: 'top',
+  pants: 'bottom', jeans: 'bottom', skirt: 'bottom', shorts: 'bottom',
+  dress: 'fullbody', jumpsuit: 'fullbody',
+  jacket: 'layer', coat: 'layer', cardigan: 'layer', blazer: 'layer',
+};
+
+const TYPE_LABELS = {
+  shirt: 'Shirt', blouse: 'Blouse', tshirt: 'T-Shirt', tank: 'Tank Top',
+  sweater: 'Sweater', pants: 'Pants', jeans: 'Jeans', skirt: 'Skirt',
+  shorts: 'Shorts', dress: 'Dress', jumpsuit: 'Jumpsuit',
+  jacket: 'Jacket', coat: 'Coat', cardigan: 'Cardigan', blazer: 'Blazer',
+};
+
+const COVERAGE_LABELS = {
+  top: 'Top', bottom: 'Bottom', fullbody: 'Full Body', layer: 'Layer'
+};
+
+const MOOD_LABELS = {
+  casual: '😊 Casual', work: '💼 Work', brunch: '☕ Brunch',
+  night: '🌙 Night Out', active: '🏃 Active',
+};
+
+const MOOD_LABELS_SHORT = {
+  casual: 'Casual', work: 'Work', brunch: 'Brunch', night: 'Night Out', active: 'Active',
+};
+
+// 18-item seed wardrobe — covers all 14 clothing types + variety
+const SEED_DATA = [
+  { id: 's01', name: 'White Button Shirt',  type: 'shirt',    color: '#F0EADF', pattern: 'solid'   },
+  { id: 's02', name: 'Striped Blouse',       type: 'blouse',   color: '#B8CCDE', pattern: 'striped' },
+  { id: 's03', name: 'Black Tee',            type: 'tshirt',   color: '#2D2D2D', pattern: 'solid'   },
+  { id: 's04', name: 'Linen Tank',           type: 'tank',     color: '#E2D4C0', pattern: 'solid'   },
+  { id: 's05', name: 'Cream Sweater',        type: 'sweater',  color: '#EEE2D0', pattern: 'solid'   },
+  { id: 's06', name: 'Floral Blouse',        type: 'blouse',   color: '#F0AABB', pattern: 'floral'  },
+  { id: 's07', name: 'Tailored Trousers',    type: 'pants',    color: '#484038', pattern: 'solid'   },
+  { id: 's08', name: 'Blue Jeans',           type: 'jeans',    color: '#4A6898', pattern: 'solid'   },
+  { id: 's09', name: 'Midi Skirt',           type: 'skirt',    color: '#C07888', pattern: 'solid'   },
+  { id: 's10', name: 'Denim Shorts',         type: 'shorts',   color: '#5A78A8', pattern: 'solid'   },
+  { id: 's11', name: 'Floral Sundress',      type: 'dress',    color: '#E8AEC0', pattern: 'floral'  },
+  { id: 's12', name: 'Little Black Dress',   type: 'dress',    color: '#1E1E1E', pattern: 'solid'   },
+  { id: 's13', name: 'Linen Jumpsuit',       type: 'jumpsuit', color: '#C0B090', pattern: 'solid'   },
+  { id: 's14', name: 'Denim Jacket',         type: 'jacket',   color: '#6088B8', pattern: 'solid'   },
+  { id: 's15', name: 'Trench Coat',          type: 'coat',     color: '#C8A070', pattern: 'solid'   },
+  { id: 's16', name: 'Pink Cardigan',        type: 'cardigan', color: '#E098AA', pattern: 'solid'   },
+  { id: 's17', name: 'Black Blazer',         type: 'blazer',   color: '#242424', pattern: 'solid'   },
+  { id: 's18', name: 'Plaid Flannel Shirt',  type: 'shirt',    color: '#905858', pattern: 'plaid'   },
+];
+
+// ---- Wardrobe CRUD ----
+
+function getWardrobe() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)); } catch { return null; }
+}
+
+function setWardrobe(items) {
+  localStorage.setItem(DB_KEY, JSON.stringify(items));
+}
+
+function initDB() {
+  if (getWardrobe() === null) {
+    setWardrobe(SEED_DATA.map(s => ({ ...s, coverage: TYPE_COVERAGE[s.type] })));
+  }
+}
+
+function addItem(item) {
+  const wardrobe = getWardrobe() || [];
+  item.id = 'u' + Date.now();
+  item.coverage = TYPE_COVERAGE[item.type] || 'top';
+  wardrobe.push(item);
+  setWardrobe(wardrobe);
+  return item;
+}
+
+function removeItem(id) {
+  setWardrobe((getWardrobe() || []).filter(i => i.id !== id));
+}
+
+// ---- Outfits ----
+
+function getOutfits() {
+  try { return JSON.parse(localStorage.getItem(OUTFITS_KEY)) || []; } catch { return []; }
+}
+
+function setOutfits(outfits) {
+  localStorage.setItem(OUTFITS_KEY, JSON.stringify(outfits));
+}
+
+function toggleSave(outfitId) {
+  const outfits = getOutfits();
+  const idx = outfits.findIndex(o => o.id === outfitId);
+  if (idx > -1) {
+    outfits[idx].saved = !outfits[idx].saved;
+    setOutfits(outfits);
+    return outfits[idx].saved;
+  }
+  return false;
+}
+
+function getFavorites() {
+  return getOutfits().filter(o => o.saved);
+}
+
+// ---- History ----
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+}
+
+function addBatch(batch) {
+  const history = getHistory();
+  history.unshift(batch);
+  if (history.length > 60) history.splice(60);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  // Also remove non-saved outfits
+  setOutfits(getOutfits().filter(o => o.saved));
+}
+
+// ---- Helpers ----
+
+function uid() {
+  return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'Yesterday';
+  return `${d} days ago`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function resolveItems(itemIds) {
+  const map = Object.fromEntries((getWardrobe() || []).map(i => [i.id, i]));
+  return itemIds.map(id => map[id]).filter(Boolean);
+}
+
+function orderedItems(items) {
+  return [
+    ...items.filter(i => i.coverage === 'layer'),
+    ...items.filter(i => i.coverage === 'top' || i.coverage === 'fullbody'),
+    ...items.filter(i => i.coverage === 'bottom'),
+  ];
+}
+
+</script>
+<script>
+// =============================================
+// Clo·set — SVG Clothing Silhouettes
+// =============================================
+// Each function returns an SVG string for a clothing type.
+// viewBox is always "0 0 60 70".
+// Usage: getSVG(type, color, pattern, uniquePatternId)
+
+function _lighten(hex, amt) {
+  const c = hex.replace('#', '');
+  const r = Math.min(255, parseInt(c.slice(0,2),16) + amt);
+  const g = Math.min(255, parseInt(c.slice(2,4),16) + amt);
+  const b = Math.min(255, parseInt(c.slice(4,6),16) + amt);
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+function _darken(hex, amt) {
+  const c = hex.replace('#', '');
+  const r = Math.max(0, parseInt(c.slice(0,2),16) - amt);
+  const g = Math.max(0, parseInt(c.slice(2,4),16) - amt);
+  const b = Math.max(0, parseInt(c.slice(4,6),16) - amt);
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+function _patternDefs(pid, color, pattern) {
+  if (pattern === 'solid') return '';
+  const lt = _lighten(color, 35);
+  const defs = {
+    striped:
+      `<defs><pattern id="${pid}" width="7" height="7" patternUnits="userSpaceOnUse">
+        <rect width="7" height="7" fill="${color}"/>
+        <line x1="0" y1="3.5" x2="7" y2="3.5" stroke="${lt}" stroke-width="2.5"/>
+      </pattern></defs>`,
+    floral:
+      `<defs><pattern id="${pid}" width="11" height="11" patternUnits="userSpaceOnUse">
+        <rect width="11" height="11" fill="${color}"/>
+        <circle cx="5.5" cy="5.5" r="2" fill="${lt}" opacity="0.75"/>
+        <circle cx="1.5" cy="1.5" r="1.1" fill="${lt}" opacity="0.45"/>
+        <circle cx="9.5" cy="9.5" r="1.1" fill="${lt}" opacity="0.45"/>
+        <circle cx="9.5" cy="1.5" r="0.8" fill="${lt}" opacity="0.35"/>
+        <circle cx="1.5" cy="9.5" r="0.8" fill="${lt}" opacity="0.35"/>
+      </pattern></defs>`,
+    plaid:
+      `<defs><pattern id="${pid}" width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="${color}"/>
+        <line x1="5" y1="0" x2="5" y2="10" stroke="${lt}" stroke-width="2.2"/>
+        <line x1="0" y1="5" x2="10" y2="5" stroke="${lt}" stroke-width="2.2"/>
+      </pattern></defs>`,
+    printed:
+      `<defs><pattern id="${pid}" width="13" height="13" patternUnits="userSpaceOnUse">
+        <rect width="13" height="13" fill="${color}"/>
+        <circle cx="4" cy="4" r="1.8" fill="${lt}" opacity="0.6"/>
+        <circle cx="10" cy="9" r="1.8" fill="${lt}" opacity="0.6"/>
+        <circle cx="10" cy="3" r="1.1" fill="${lt}" opacity="0.4"/>
+        <circle cx="4" cy="10" r="1.1" fill="${lt}" opacity="0.4"/>
+      </pattern></defs>`,
+  };
+  return defs[pattern] || '';
+}
+function _fill(pid, color, pattern) {
+  return pattern === 'solid' ? color : `url(#${pid})`;
+}
+function _svg(inner, vb='0 0 60 70') {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" fill="none">${inner}</svg>`;
+}
+
+// ---- TOPS ----
+
+function svgShirt(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,28);
+  return _svg(`${d}
+    <path d="M14 22L8 13L21 8L25 14Q30 19 35 14L39 8L52 13L46 22L42 22L42 62L18 62L18 22Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M21 8L25 15L30 12L35 15L39 8L30 10Z" fill="${dk}" opacity="0.3"/>
+    <path d="M8 13L14 22L18 22L18 17L11 11Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M52 13L46 22L42 22L42 17L49 11Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="30" y1="13" x2="30" y2="61" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <circle cx="30" cy="26" r="1.2" fill="${dk}" opacity="0.5"/>
+    <circle cx="30" cy="34" r="1.2" fill="${dk}" opacity="0.5"/>
+  `);
+}
+function svgBlouse(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,28);
+  return _svg(`${d}
+    <path d="M16 24L9 13L22 8L26 16L26 44Q26 62 30 62Q34 62 34 44L34 16L38 8L51 13L44 24L44 44Q44 66 30 66Q16 66 16 44Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M9 13L7 21L16 26L16 24Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M51 13L53 21L44 26L44 24Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M22 8L26 16L30 21L34 16L38 8L30 11Z" fill="${dk}" opacity="0.28"/>
+  `);
+}
+function svgTshirt(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,28);
+  return _svg(`${d}
+    <ellipse cx="30" cy="9" rx="8" ry="4" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M22 9L18 21L18 61L42 61L42 21L38 9Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M10 12L18 21L18 17L13 10Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M50 12L42 21L42 17L47 10Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M22 9L10 12L18 21" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M38 9L50 12L42 21" fill="${f}" stroke="${dk}" stroke-width="1"/>
+  `);
+}
+function svgTank(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,28);
+  return _svg(`${d}
+    <path d="M22 4L22 10Q15 12 14 20L14 62L46 62L46 20Q45 12 38 10L38 4Q34 2 30 2Q26 2 22 4Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M22 4L20 2L26 3L28 8" fill="${f}" stroke="${dk}" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M38 4L40 2L34 3L32 8" fill="${f}" stroke="${dk}" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M14 20Q18 20 20 26" fill="none" stroke="${dk}" stroke-width="0.9"/>
+    <path d="M46 20Q42 20 40 26" fill="none" stroke="${dk}" stroke-width="0.9"/>
+  `);
+}
+function svgSweater(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,22);
+  return _svg(`${d}
+    <ellipse cx="30" cy="10" rx="7" ry="4" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M23 10L13 24L13 64L47 64L47 24L37 10Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M8 13L13 24L13 64L8 64L5 18Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M52 13L47 24L47 64L52 64L55 18Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <rect x="13" y="58" width="34" height="6" rx="1" fill="${dk}" opacity="0.18"/>
+    <line x1="16" y1="58" x2="16" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="20" y1="58" x2="20" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="24" y1="58" x2="24" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="28" y1="58" x2="28" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="32" y1="58" x2="32" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="36" y1="58" x2="36" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="40" y1="58" x2="40" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <line x1="44" y1="58" x2="44" y2="64" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+    <rect x="5" y="58" width="8" height="6" rx="1" fill="${dk}" opacity="0.18"/>
+    <rect x="47" y="58" width="8" height="6" rx="1" fill="${dk}" opacity="0.18"/>
+  `);
+}
+
+// ---- BOTTOMS ----
+
+function svgPants(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,28);
+  return _svg(`${d}
+    <rect x="12" y="4" width="36" height="8" rx="3" fill="${dk}" opacity="0.65"/>
+    <path d="M12 10L12 40L24 40L30 34L36 40L48 40L48 10Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="12" y="40" width="17" height="26" rx="4" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="31" y="40" width="17" height="26" rx="4" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="30" y1="10" x2="30" y2="34" stroke="${dk}" stroke-width="0.8" opacity="0.4"/>
+    <line x1="26" y1="10" x2="24" y2="14" stroke="${dk}" stroke-width="0.7" opacity="0.3"/>
+    <line x1="34" y1="10" x2="36" y2="14" stroke="${dk}" stroke-width="0.7" opacity="0.3"/>
+  `);
+}
+function svgJeans(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,32);
+  return _svg(`${d}
+    <rect x="12" y="4" width="36" height="7" rx="2" fill="${dk}" opacity="0.8"/>
+    <path d="M12 10L12 40L24 40L30 34L36 40L48 40L48 10Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="12" y="40" width="17" height="26" rx="3" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="31" y="40" width="17" height="26" rx="3" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="30" y1="10" x2="30" y2="34" stroke="${dk}" stroke-width="1" opacity="0.55"/>
+    <path d="M15 15Q19 12 22 16" fill="none" stroke="${dk}" stroke-width="0.9" opacity="0.55"/>
+    <path d="M45 15Q41 12 38 16" fill="none" stroke="${dk}" stroke-width="0.9" opacity="0.55"/>
+    <line x1="12" y1="66" x2="29" y2="66" stroke="${dk}" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    <line x1="31" y1="66" x2="48" y2="66" stroke="${dk}" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  `);
+}
+function svgSkirt(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,26);
+  return _svg(`${d}
+    <rect x="16" y="4" width="28" height="7" rx="3" fill="${dk}" opacity="0.6"/>
+    <path d="M16 10L7 66L53 66L44 10Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="22" y1="14" x2="14" y2="62" stroke="${dk}" stroke-width="0.6" opacity="0.25"/>
+    <line x1="38" y1="14" x2="46" y2="62" stroke="${dk}" stroke-width="0.6" opacity="0.25"/>
+    <line x1="30" y1="11" x2="30" y2="65" stroke="${dk}" stroke-width="0.6" opacity="0.2"/>
+  `);
+}
+function svgShorts(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,26);
+  return _svg(`${d}
+    <rect x="12" y="4" width="36" height="7" rx="3" fill="${dk}" opacity="0.7"/>
+    <path d="M12 10L12 32L24 32L30 26L36 32L48 32L48 10Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="12" y="32" width="17" height="18" rx="4" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="31" y="32" width="17" height="18" rx="4" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="30" y1="10" x2="30" y2="26" stroke="${dk}" stroke-width="0.8" opacity="0.4"/>
+    <line x1="12" y1="50" x2="29" y2="50" stroke="${dk}" stroke-width="1.2" opacity="0.35"/>
+    <line x1="31" y1="50" x2="48" y2="50" stroke="${dk}" stroke-width="1.2" opacity="0.35"/>
+  `);
+}
+
+// ---- FULL BODY ----
+
+function svgDress(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,26);
+  return _svg(`${d}
+    <path d="M20 7Q16 5 14 11L14 30Q14 35 20 35L40 35Q46 35 46 30L46 11Q44 5 40 7Q36 3 30 3Q24 3 20 7Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M20 7Q21 3 25 3" fill="none" stroke="${dk}" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M40 7Q39 3 35 3" fill="none" stroke="${dk}" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M14 30L7 67L53 67L46 30Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="14" y1="35" x2="46" y2="35" stroke="${dk}" stroke-width="0.8" opacity="0.4"/>
+    <line x1="22" y1="38" x2="16" y2="63" stroke="${dk}" stroke-width="0.5" opacity="0.2"/>
+    <line x1="38" y1="38" x2="44" y2="63" stroke="${dk}" stroke-width="0.5" opacity="0.2"/>
+  `);
+}
+function svgJumpsuit(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,26);
+  return _svg(`${d}
+    <path d="M20 8Q16 6 14 12L14 34L46 34L46 12Q44 6 40 8Q36 4 30 4Q24 4 20 8Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="22" y1="4" x2="20" y2="9" stroke="${dk}" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="38" y1="4" x2="40" y2="9" stroke="${dk}" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="14" y="32" width="32" height="5" rx="1" fill="${dk}" opacity="0.2"/>
+    <rect x="14" y="36" width="15" height="29" rx="5" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <rect x="31" y="36" width="15" height="29" rx="5" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="30" y1="9" x2="30" y2="36" stroke="${dk}" stroke-width="0.7" opacity="0.35"/>
+  `);
+}
+
+// ---- LAYERS ----
+
+function svgJacket(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,26);
+  return _svg(`${d}
+    <path d="M13 22L8 12L22 7L27 18L27 63L13 63Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M47 22L52 12L38 7L33 18L33 63L47 63Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M22 7L27 18L30 14L33 18L38 7L30 12Z" fill="${dk}" opacity="0.35"/>
+    <path d="M8 12L13 22L13 63L8 63L5 18Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M52 12L47 22L47 63L52 63L55 18Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="30" y1="14" x2="30" y2="63" stroke="${dk}" stroke-width="1" opacity="0.4"/>
+    <circle cx="30" cy="28" r="1.4" fill="${dk}" opacity="0.5"/>
+    <circle cx="30" cy="38" r="1.4" fill="${dk}" opacity="0.5"/>
+  `);
+}
+function svgCoat(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,22);
+  return _svg(`${d}
+    <path d="M13 20L8 10L22 6L26 16L26 67L13 67Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M47 20L52 10L38 6L34 16L34 67L47 67Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M22 6L26 16L30 12L34 16L38 6L30 10Z" fill="${dk}" opacity="0.38"/>
+    <path d="M8 10L13 20L13 67L8 67L5 17Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M52 10L47 20L47 67L52 67L55 17Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <circle cx="30" cy="28" r="1.5" fill="${dk}" opacity="0.55"/>
+    <circle cx="30" cy="37" r="1.5" fill="${dk}" opacity="0.55"/>
+    <circle cx="30" cy="46" r="1.5" fill="${dk}" opacity="0.55"/>
+    <line x1="13" y1="38" x2="47" y2="38" stroke="${dk}" stroke-width="2" opacity="0.2"/>
+  `);
+}
+function svgCardigan(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,20);
+  return _svg(`${d}
+    <path d="M12 22L8 12L22 8L26 16L26 64L12 64Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M48 22L52 12L38 8L34 16L34 64L48 64Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M22 8L26 16L30 13L34 16L38 8L30 11Z" fill="${dk}" opacity="0.24"/>
+    <path d="M8 12L12 22L12 64L8 64L5 18Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <path d="M52 12L48 22L48 64L52 64L55 18Z" fill="${f}" stroke="${dk}" stroke-width="1"/>
+    <line x1="20" y1="20" x2="20" y2="60" stroke="${dk}" stroke-width="0.5" opacity="0.18"/>
+    <line x1="24" y1="20" x2="24" y2="60" stroke="${dk}" stroke-width="0.5" opacity="0.18"/>
+    <line x1="36" y1="20" x2="36" y2="60" stroke="${dk}" stroke-width="0.5" opacity="0.18"/>
+    <line x1="40" y1="20" x2="40" y2="60" stroke="${dk}" stroke-width="0.5" opacity="0.18"/>
+    <line x1="30" y1="13" x2="30" y2="64" stroke="${dk}" stroke-width="1" opacity="0.38"/>
+  `);
+}
+function svgBlazer(c, pat, pid) {
+  const d = _patternDefs(pid,c,pat), f = _fill(pid,c,pat), dk = _darken(c,28);
+  return _svg(`${d}
+    <path d="M13 22L9 11L22 7L27 18L27 64L13 64Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M47 22L51 11L38 7L33 18L33 64L47 64Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M22 7L27 18L30 14L33 18L38 7L30 11Z" fill="${dk}" opacity="0.42"/>
+    <path d="M9 11L13 22L13 64L9 64L7 17Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <path d="M51 11L47 22L47 64L51 64L53 17Z" fill="${f}" stroke="${dk}" stroke-width="1.2"/>
+    <rect x="14" y="26" width="9" height="6" rx="1" fill="none" stroke="${dk}" stroke-width="0.8" opacity="0.45"/>
+    <circle cx="30" cy="34" r="2" fill="${dk}" opacity="0.45"/>
+    <line x1="30" y1="14" x2="30" y2="64" stroke="${dk}" stroke-width="0.8" opacity="0.38"/>
+  `);
+}
+
+// ---- MASTER DISPATCH ----
+
+function getSVG(type, color, pattern, pid) {
+  color   = color   || '#CCCCCC';
+  pattern = pattern || 'solid';
+  pid     = (pid    || type).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const map = {
+    shirt: svgShirt, blouse: svgBlouse, tshirt: svgTshirt, tank: svgTank,
+    sweater: svgSweater, pants: svgPants, jeans: svgJeans, skirt: svgSkirt,
+    shorts: svgShorts, dress: svgDress, jumpsuit: svgJumpsuit,
+    jacket: svgJacket, coat: svgCoat, cardigan: svgCardigan, blazer: svgBlazer,
+  };
+  const fn = map[type];
+  return fn ? fn(color, pattern, pid) : `<svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="10" width="40" height="50" rx="6" fill="${color}" opacity="0.7"/></svg>`;
+}
+
+</script>
+<script>
+// =============================================
+// Clo·set — Rule-based Outfit Generator
+// =============================================
+
+// Items scored higher for mood-appropriate types/patterns
+const MOOD_TYPE_BONUS = {
+  casual:  ['tshirt', 'jeans', 'shorts', 'tank', 'cardigan'],
+  work:    ['blazer', 'shirt', 'blouse', 'pants', 'skirt'],
+  brunch:  ['blouse', 'dress', 'skirt', 'cardigan', 'jumpsuit'],
+  night:   ['dress', 'jumpsuit', 'blazer', 'blouse'],
+  active:  ['tank', 'tshirt', 'shorts'],
+};
+const MOOD_PATTERN_BONUS = {
+  casual:  ['solid', 'striped', 'printed'],
+  work:    ['solid', 'plaid', 'striped'],
+  brunch:  ['floral', 'solid', 'striped'],
+  night:   ['solid'],
+  active:  ['solid', 'striped'],
+};
+
+function _score(item, mood) {
+  let s = Math.random() * 8;
+  if ((MOOD_TYPE_BONUS[mood] || []).includes(item.type)) s += 6;
+  if ((MOOD_PATTERN_BONUS[mood] || []).includes(item.pattern)) s += 3;
+  if (mood === 'night') {
+    const hex = item.color.replace('#','');
+    const bright = (parseInt(hex.slice(0,2),16) + parseInt(hex.slice(2,4),16) + parseInt(hex.slice(4,6),16)) / 3;
+    if (bright < 110) s += 5;
+  }
+  return s;
+}
+
+function _sortByMood(items, mood) {
+  return [...items].sort((a,b) => _score(b,mood) - _score(a,mood));
+}
+
+function generateOutfits(wardrobe, mood, count = 4) {
+  const tops      = wardrobe.filter(i => i.coverage === 'top');
+  const bottoms   = wardrobe.filter(i => i.coverage === 'bottom');
+  const fullbodies = wardrobe.filter(i => i.coverage === 'fullbody');
+  const layers    = wardrobe.filter(i => i.coverage === 'layer');
+
+  const sTops      = _sortByMood(tops, mood);
+  const sBottoms   = _sortByMood(bottoms, mood);
+  const sFullbody  = _sortByMood(fullbodies, mood);
+  const sLayers    = _sortByMood(layers, mood);
+
+  const canFull   = fullbodies.length > 0;
+  const canTopBot = tops.length > 0 && bottoms.length > 0;
+
+  if (!canFull && !canTopBot) return [];
+
+  const outfits = [];
+  const usedKeys = new Set();
+  let fi = 0, ti = 0, bi = 0, li = 0;
+  let attempts = 0;
+
+  while (outfits.length < count && attempts < 40) {
+    attempts++;
+    let items = null;
+
+    // Alternate: even indexes try fullbody path, odd try top+bottom
+    const tryFull = canFull && (outfits.length % 2 === 0 || !canTopBot);
+
+    if (tryFull) {
+      const fb = sFullbody[fi % sFullbody.length]; fi++;
+      items = [fb];
+    } else if (canTopBot) {
+      const top = sTops[ti % sTops.length]; ti++;
+      const bot = sBottoms[bi % sBottoms.length]; bi++;
+      items = [top, bot];
+    } else if (canFull) {
+      const fb = sFullbody[fi % sFullbody.length]; fi++;
+      items = [fb];
+    }
+
+    if (!items) continue;
+
+    // Optionally add a layer (60% chance)
+    if (sLayers.length > 0 && Math.random() < 0.6) {
+      items.push(sLayers[li % sLayers.length]);
+      li++;
+    }
+
+    const key = items.map(i => i.id).sort().join('|');
+    if (usedKeys.has(key)) continue;
+    usedKeys.add(key);
+
+    outfits.push({
+      id: uid(),
+      items: items.map(i => i.id),
+      mood,
+      timestamp: Date.now(),
+      saved: false,
+    });
+  }
+
+  // Persist outfits + batch to history
+  const allOutfits = getOutfits();
+  outfits.forEach(o => allOutfits.unshift(o));
+  // Keep max 200 outfits
+  if (allOutfits.length > 200) allOutfits.splice(200);
+  setOutfits(allOutfits);
+
+  addBatch({
+    id: uid(),
+    mood,
+    timestamp: Date.now(),
+    outfitIds: outfits.map(o => o.id),
+  });
+
+  return outfits;
+}
+
+</script>
+<script>
+// =============================================
+//  App State
+// =============================================
+let currentScreen  = 'splash';
+let currentMood    = 'casual';
+let currentOutfits = [];
+let wardrobeFilter = 'all';
+let selectedAddColor = '#2D2D2D';
+
+const ADD_COLORS = [
+  '#2D2D2D','#F0EADF','#4A6898','#C07888','#484038','#905858',
+  '#6088B8','#C0B090','#E2D4C0','#C8A070','#E098AA','#3A7A46',
+  '#B8CCDE','#8C7BAC','#F0AABB','#C0C0C0',
+];
+
+// =============================================
+//  Navigation
+// =============================================
+function navigate(screen) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none';
+    s.classList.remove('active');
+  });
+  // Show target
+  const el = document.getElementById('screen-' + screen);
+  el.style.display = 'block';
+  el.classList.add('active');
+
+  // Header & nav visibility
+  const isSplash = screen === 'splash';
+  document.getElementById('app-header').style.display = isSplash ? 'none' : '';
+  document.getElementById('bottom-nav').style.display  = isSplash ? 'none' : '';
+
+  // Nav active state
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navBtn = document.querySelector(`.nav-item[data-screen="${screen}"]`);
+  if (navBtn) navBtn.classList.add('active');
+
+  currentScreen = screen;
+  renderScreen(screen);
+  window.scrollTo(0, 0);
+}
+
+function renderScreen(screen) {
+  const subtitleFns = {
+    wardrobe:  () => `${(getWardrobe()||[]).length} items`,
+    suggest:   () => currentOutfits.length ? `${currentOutfits.length} outfits ready` : 'Pick a mood below',
+    favorites: () => { const n = getFavorites().length; return n ? `${n} saved` : 'None saved yet'; },
+    history:   () => { const n = getHistory().length; return n ? `${n} sessions` : 'No history yet'; },
+  };
+  const titles = {
+    wardrobe: 'My Wardrobe', suggest: 'Get Dressed ✨',
+    favorites: 'Saved Looks', history: 'History',
+  };
+  if (titles[screen]) {
+    document.getElementById('header-title').textContent = titles[screen];
+    document.getElementById('header-subtitle').textContent = (subtitleFns[screen] || (() => ''))();
+  }
+
+  // Header action button
+  const action = document.getElementById('header-action');
+  action.innerHTML = screen === 'wardrobe'
+    ? `<button class="header-add-btn" onclick="openAddOverlay()" title="Add item">+</button>`
+    : '';
+
+  switch (screen) {
+    case 'wardrobe':  renderWardrobe(); break;
+    case 'suggest':   renderSuggestScreen(); break;
+    case 'favorites': renderFavorites(); break;
+    case 'history':   renderHistory(); break;
+  }
+}
+
+// =============================================
+//  SUGGEST SCREEN
+// =============================================
+document.getElementById('generate-btn').addEventListener('click', () => {
+  const wardrobe = getWardrobe() || [];
+  currentOutfits = generateOutfits(wardrobe, currentMood);
+  renderOutfitCards();
+  updateHeaderSubtitle();
+});
+
+document.getElementById('mood-picker').addEventListener('click', e => {
+  const chip = e.target.closest('.mood-chip');
+  if (!chip) return;
+  document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  currentMood = chip.dataset.mood;
+});
+
+function renderSuggestScreen() {
+  if (currentOutfits.length === 0) {
+    // Auto-generate on first visit
+    const wardrobe = getWardrobe() || [];
+    currentOutfits = generateOutfits(wardrobe, currentMood);
+  }
+  renderOutfitCards();
+}
+
+function renderOutfitCards() {
+  const container = document.getElementById('outfits-container');
+  if (!currentOutfits || currentOutfits.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🧺</div>
+        <h3>Not enough clothes</h3>
+        <p>Add at least one top + bottom pair, or a dress / jumpsuit to your wardrobe.</p>
+        <button class="btn btn-outline" style="margin-top:16px" onclick="navigate('wardrobe')">Go to Wardrobe</button>
+      </div>`;
+    return;
+  }
+
+  // Re-read saved state from storage
+  const savedMap = Object.fromEntries(getOutfits().map(o => [o.id, o.saved]));
+  currentOutfits.forEach(o => { o.saved = savedMap[o.id] ?? o.saved; });
+
+  container.innerHTML = currentOutfits.map((outfit, idx) => outfitCardHTML(outfit, idx)).join('');
+}
+
+function outfitCardHTML(outfit, idx = 0) {
+  const items = resolveItems(outfit.items);
+  if (items.length === 0) return '';
+  const ordered = orderedItems(items);
+  const moodKey = outfit.mood || 'casual';
+  const moodBadgeClass = `badge badge-${moodKey}`;
+  return `
+    <div class="outfit-card" style="animation-delay:${idx*0.07}s">
+      <div class="outfit-svgs">
+        ${ordered.map(item => `
+          <div class="outfit-svg-item${item.coverage==='layer'?' outfit-svg-layer':''}">
+            ${getSVG(item.type, item.color, item.pattern, outfit.id+'_'+item.id)}
+          </div>`).join('')}
+      </div>
+      <div class="outfit-meta">
+        <span class="${moodBadgeClass}">${MOOD_LABELS_SHORT[moodKey] || moodKey}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="color-palette">
+            ${items.map(i=>`<span class="palette-dot" style="background:${i.color}" title="${i.name}"></span>`).join('')}
+          </div>
+          <button class="save-btn${outfit.saved?' saved':''}"
+            onclick="handleSaveToggle('${outfit.id}',this)"
+            title="${outfit.saved?'Remove from favorites':'Save to favorites'}">
+            ${outfit.saved ? '♥' : '♡'}
+          </button>
+        </div>
+      </div>
+      <div class="outfit-items">
+        ${items.map(i=>`<span class="item-pill">${i.name}</span>`).join('')}
+      </div>
+    </div>`;
+}
+
+function handleSaveToggle(outfitId, btn) {
+  const saved = toggleSave(outfitId);
+  btn.textContent = saved ? '♥' : '♡';
+  btn.classList.toggle('saved', saved);
+  const o = currentOutfits.find(x => x.id === outfitId);
+  if (o) o.saved = saved;
+  showToast(saved ? '♥ Saved to favorites' : 'Removed from favorites');
+  updateHeaderSubtitle();
+}
+
+function updateHeaderSubtitle() {
+  if (currentScreen !== 'splash') {
+    const subtitleFns = {
+      suggest:   () => currentOutfits.length ? `${currentOutfits.length} outfits ready` : 'Pick a mood',
+      favorites: () => { const n = getFavorites().length; return n ? `${n} saved` : 'None saved yet'; },
+      history:   () => { const n = getHistory().length; return n ? `${n} sessions` : 'No history yet'; },
+      wardrobe:  () => `${(getWardrobe()||[]).length} items`,
+    };
+    const fn = subtitleFns[currentScreen];
+    if (fn) document.getElementById('header-subtitle').textContent = fn();
+  }
+}
+
+// =============================================
+//  WARDROBE SCREEN
+// =============================================
+function renderWardrobe() {
+  const grid = document.getElementById('wardrobe-grid');
+  const wardrobe = getWardrobe() || [];
+  const filtered = wardrobeFilter === 'all'
+    ? wardrobe : wardrobe.filter(i => i.coverage === wardrobeFilter);
+
+  // Update filter tab counts
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    const f = tab.dataset.filter;
+    const cnt = f === 'all' ? wardrobe.length : wardrobe.filter(i => i.coverage === f).length;
+    tab.textContent = f === 'all' ? `All (${cnt})` :
+      f === 'top' ? `Tops (${cnt})` :
+      f === 'bottom' ? `Bottoms (${cnt})` :
+      f === 'fullbody' ? `Full Body (${cnt})` : `Layers (${cnt})`;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">👗</div>
+      <h3>No items here</h3>
+      <p>Tap + to add your first item in this category.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(item => `
+    <div class="wardrobe-item">
+      <button class="delete-btn" onclick="deleteWardrobeItem('${item.id}',event)" title="Remove">✕</button>
+      ${getSVG(item.type, item.color, item.pattern, item.id)}
+      <div class="item-name" title="${item.name}">${item.name}</div>
+      <div class="item-type">${TYPE_LABELS[item.type] || item.type}</div>
+    </div>`).join('');
+
+  updateHeaderSubtitle();
+}
+
+function deleteWardrobeItem(id, e) {
+  e.stopPropagation();
+  removeItem(id);
+  renderWardrobe();
+  showToast('Item removed');
+}
+
+// Filter tabs
+document.getElementById('filter-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.filter-tab');
+  if (!tab) return;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  wardrobeFilter = tab.dataset.filter;
+  renderWardrobe();
+});
+
+// =============================================
+//  FAVORITES SCREEN
+// =============================================
+function renderFavorites() {
+  const container = document.getElementById('favorites-container');
+  const favs = getFavorites();
+
+  if (favs.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🤍</div>
+        <h3>No saved looks yet</h3>
+        <p>Tap ♡ on any outfit suggestion to save it here.</p>
+        <button class="btn btn-outline" style="margin-top:16px" onclick="navigate('suggest')">Get Suggestions</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="fav-grid">${favs.map(outfit => favCardHTML(outfit)).join('')}</div>`;
+  updateHeaderSubtitle();
+}
+
+function favCardHTML(outfit) {
+  const items = resolveItems(outfit.items);
+  if (items.length === 0) return '';
+  const ordered = orderedItems(items);
+  const moodKey = outfit.mood || 'casual';
+  return `
+    <div class="fav-card">
+      <div class="mini-svgs">
+        ${ordered.map(item => `
+          <div style="opacity:${item.coverage==='layer'?'0.8':'1'}">
+            ${getSVG(item.type, item.color, item.pattern, 'fav_'+outfit.id+'_'+item.id)}
+          </div>`).join('')}
+      </div>
+      <button class="unsave-btn" onclick="unsaveOutfit('${outfit.id}')" title="Remove from saved">♥</button>
+      <div class="fav-label">${items.map(i=>i.name).join(' + ')}</div>
+      <div class="fav-mood">${MOOD_LABELS_SHORT[moodKey] || moodKey}</div>
+    </div>`;
+}
+
+function unsaveOutfit(outfitId) {
+  toggleSave(outfitId);
+  // Also update currentOutfits if present
+  const o = currentOutfits.find(x => x.id === outfitId);
+  if (o) o.saved = false;
+  renderFavorites();
+  updateHeaderSubtitle();
+  showToast('Removed from saved looks');
+}
+
+// =============================================
+//  HISTORY SCREEN
+// =============================================
+function renderHistory() {
+  const container = document.getElementById('history-container');
+  const topBar = document.getElementById('history-top-bar');
+  const history = getHistory();
+  const allOutfits = getOutfits();
+  const outfitMap = Object.fromEntries(allOutfits.map(o => [o.id, o]));
+
+  if (history.length === 0) {
+    topBar.innerHTML = '';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🕐</div>
+        <h3>No history yet</h3>
+        <p>Generate outfit suggestions to see your history here.</p>
+        <button class="btn btn-outline" style="margin-top:16px" onclick="navigate('suggest')">Get Suggestions</button>
+      </div>`;
+    return;
+  }
+
+  topBar.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="confirmClearHistory()">Clear History</button>`;
+
+  container.innerHTML = history.map(batch => {
+    const batchOutfits = (batch.outfitIds || []).map(id => outfitMap[id]).filter(Boolean);
+    if (batchOutfits.length === 0) return '';
+    const moodKey = batch.mood || 'casual';
+    return `
+      <div class="history-batch">
+        <div class="batch-header">
+          <div>
+            <span class="badge badge-${moodKey}" style="font-size:10px">${MOOD_LABELS_SHORT[moodKey]}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="batch-time">${timeAgo(batch.timestamp)}</span>
+            <button class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:11px"
+              onclick="regenFromHistory('${batch.mood}')">↻ Redo</button>
+          </div>
+        </div>
+        <div class="batch-thumbs">
+          ${batchOutfits.map(outfit => {
+            const items = resolveItems(outfit.items);
+            if (items.length === 0) return '';
+            const ordered = orderedItems(items);
+            return `<div class="outfit-thumb">
+              ${ordered.map(item => `
+                <div style="opacity:${item.coverage==='layer'?'0.8':'1'}">
+                  ${getSVG(item.type, item.color, item.pattern, 'hist_'+outfit.id+'_'+item.id)}
+                </div>`).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  updateHeaderSubtitle();
+}
+
+function regenFromHistory(mood) {
+  // Set mood + navigate to suggest and generate
+  currentMood = mood;
+  document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.querySelector(`.mood-chip[data-mood="${mood}"]`);
+  if (chip) chip.classList.add('active');
+  const wardrobe = getWardrobe() || [];
+  currentOutfits = generateOutfits(wardrobe, currentMood);
+  navigate('suggest');
+  showToast(`New ${MOOD_LABELS_SHORT[mood]} outfits generated ✨`);
+}
+
+function confirmClearHistory() {
+  if (confirm('Clear all outfit history? Saved favorites will be kept.')) {
+    clearHistory();
+    renderHistory();
+    showToast('History cleared');
+  }
+}
+
+// =============================================
+//  ADD ITEM OVERLAY
+// =============================================
+function buildColorSwatches() {
+  const container = document.getElementById('color-swatches');
+  container.innerHTML = ADD_COLORS.map(c => `
+    <div class="color-swatch${c === selectedAddColor ? ' selected' : ''}"
+      style="background:${c}"
+      title="${c}"
+      onclick="selectColor('${c}')">
+    </div>`).join('');
+}
+
+function selectColor(color) {
+  selectedAddColor = color;
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.classList.toggle('selected', s.style.background === color ||
+      s.style.backgroundColor === color ||
+      // normalise hex vs rgb comparison
+      rgbToHex(s.style.backgroundColor) === color.toLowerCase());
+  });
+  updateAddPreview();
+}
+
+function rgbToHex(rgb) {
+  const m = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+  if (!m) return rgb.toLowerCase();
+  return '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+}
+
+function updateAddPreview() {
+  const type    = document.getElementById('item-type').value;
+  const pattern = document.getElementById('item-pattern').value;
+  const preview = document.getElementById('svg-preview');
+  preview.innerHTML = getSVG(type, selectedAddColor, pattern, 'preview_add');
+}
+
+function openAddOverlay() {
+  selectedAddColor = ADD_COLORS[0];
+  buildColorSwatches();
+  updateAddPreview();
+  document.getElementById('add-overlay').style.display = 'flex';
+}
+
+function closeAddOverlay() {
+  document.getElementById('add-overlay').style.display = 'none';
+  document.getElementById('add-form').reset();
+  updateAddPreview();
+}
+
+function overlayClickOutside(e) {
+  if (e.target === document.getElementById('add-overlay')) closeAddOverlay();
+}
+
+function submitAddItem(e) {
+  e.preventDefault();
+  const name    = document.getElementById('item-name').value.trim();
+  const type    = document.getElementById('item-type').value;
+  const pattern = document.getElementById('item-pattern').value;
+  if (!name) return;
+  addItem({ name, type, color: selectedAddColor, pattern });
+  closeAddOverlay();
+  renderWardrobe();
+  showToast(`"${name}" added to wardrobe ✓`);
+}
+
+// =============================================
+//  INIT
+// =============================================
+(function init() {
+  initDB();
+  navigate('splash');
+})();
+</script>
+
+</body>
+</html>

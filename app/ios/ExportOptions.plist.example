@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  iOS IPA export options example.
+  Copy to ExportOptions.plist and fill in your Team ID + provisioning profile names.
+  Usage: xcodebuild -exportArchive -archivePath <path.xcarchive>
+           -exportOptionsPlist ios/ExportOptions.plist -exportPath <output/>
+-->
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store</string>   <!-- app-store | ad-hoc | enterprise | development -->
+
+  <key>teamID</key>
+  <string>YOUR_TEAM_ID</string>
+
+  <key>uploadBitcode</key>
+  <false/>
+
+  <key>compileBitcode</key>
+  <false/>
+
+  <key>provisioningProfiles</key>
+  <dict>
+    <!-- Bundle ID : Provisioning profile name -->
+    <key>com.closetapp.closet</key>
+    <string>Clo·set AppStore Distribution</string>
+  </dict>
+
+  <key>signingStyle</key>
+  <string>manual</string>
+
+  <key>stripSwiftSymbols</key>
+  <true/>
+
+  <key>thinning</key>
+  <string>&lt;none&gt;</string>
+</dict>
+</plist>

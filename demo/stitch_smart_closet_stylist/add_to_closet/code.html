@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Closet Curator - Add to Collection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#b9c9d5",
+                    "secondary-container": "#fecdb4",
+                    "on-secondary-fixed-variant": "#603f2d",
+                    "secondary-fixed": "#ffdbca",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#b9c9d5",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "background": "#f9f9f9",
+                    "surface-container-highest": "#e2e2e2",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e2e2e2",
+                    "inverse-surface": "#2f3131",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#d3c5ad",
+                    "outline-variant": "#c3c7cb",
+                    "on-tertiary-fixed-variant": "#4f4533",
+                    "secondary-fixed-dim": "#ecbda4",
+                    "on-primary-fixed-variant": "#3a4953",
+                    "surface": "#f9f9f9",
+                    "surface-container": "#eeeeee",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#795541",
+                    "on-primary-container": "#a2b2be",
+                    "on-tertiary-container": "#bdaf98",
+                    "tertiary-fixed": "#f0e0c8",
+                    "surface-container-low": "#f3f3f4",
+                    "secondary": "#7a5642",
+                    "surface-bright": "#f9f9f9",
+                    "on-tertiary-fixed": "#221b0b",
+                    "surface-tint": "#51606b",
+                    "primary-fixed": "#d5e5f1",
+                    "surface-dim": "#dadada",
+                    "on-background": "#1a1c1c",
+                    "error": "#ba1a1a",
+                    "tertiary": "#352c1c",
+                    "on-surface": "#1a1c1c",
+                    "on-surface-variant": "#43474b",
+                    "on-secondary-fixed": "#2e1506",
+                    "on-primary-fixed": "#0e1d26",
+                    "inverse-on-surface": "#f0f1f1",
+                    "primary-container": "#36454f",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#4c4230",
+                    "surface-container-high": "#e8e8e8",
+                    "primary": "#202f38",
+                    "outline": "#73777b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-xs": "4px",
+                    "gutter": "20px",
+                    "stack-lg": "24px",
+                    "stack-md": "16px",
+                    "stack-xl": "40px",
+                    "margin-desktop": "60px",
+                    "stack-sm": "8px",
+                    "margin-mobile": "20px",
+                    "container-max": "1200px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Playfair Display"],
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Playfair Display"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg-mobile": ["Playfair Display"],
+                    "display-lg": ["Playfair Display"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hanger-line {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #c3c7cb 20%, #c3c7cb 80%, transparent);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-bottom-color: #ecbda4 !important;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col font-body-md">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface border-none shadow-sm shadow-primary/5 z-50 flex items-center justify-between px-margin-mobile py-stack-md h-16">
+<button class="text-primary hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-center font-semibold tracking-tight text-primary">Closet Curator</h1>
+<button class="text-primary hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center w-full max-w-container-max mx-auto px-margin-mobile py-stack-lg pb-32">
+<!-- Specialty Component: The Hanger (Progress/Context Indicator) -->
+<div class="w-full max-w-md flex items-center justify-center gap-4 mb-stack-xl">
+<div class="hanger-line flex-grow"></div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="checkroom">checkroom</span>
+<div class="hanger-line flex-grow"></div>
+</div>
+<!-- Form Container -->
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-[24px] shadow-[0px_10px_30px_rgba(54,69,79,0.05)] p-stack-lg md:p-stack-xl border border-surface-container-low">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary mb-stack-lg text-center">New Acquisition</h2>
+<form class="flex flex-col gap-stack-lg">
+<!-- Upload Area -->
+<div class="relative group cursor-pointer overflow-hidden rounded-xl bg-tertiary-fixed/20 border-2 border-dashed border-tertiary-fixed-dim/50 h-64 flex flex-col items-center justify-center transition-all hover:bg-tertiary-fixed/30">
+<img alt="Closet placeholder" class="absolute inset-0 w-full h-full object-cover opacity-10 mix-blend-multiply transition-transform duration-700 group-hover:scale-105" data-alt="A bright and airy boutique closet interior featuring high-end minimalist garment racks and elegant wooden hangers. The lighting is soft and natural, emphasizing a palette of creamy whites, soft champagnes, and muted charcoal accents. The atmosphere is sophisticated and orderly, reflecting a modern professional wardrobe management app aesthetic. The image uses a shallow depth of field to create a dreamlike, premium feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs4WckB2xtOaXbH96zaCFG-Mip4bC1Gc4VvvPFPMIGA6e8I2vfe4cRP3xShQmGN4Iecvw8qPxf9EnZxjxwYY11M1cI4FyGVujfp4eZG384Ilboj0N7f86KQZyJqz-LhwxdcQWlbC9DyLE1TBjiRKFcDg1jKg2Q4w83ez9v6t2uv54f7-rBgcquor27_2UCqBjYFHtsWV4ugI3c3oNe7NKmGrzzwSzRK4HFnJl7HHM1ui8iiNK07KoWTc530XjD60z2n37-WzfBjpp-"/>
+<div class="z-10 flex flex-col items-center gap-stack-sm text-primary">
+<div class="w-16 h-16 rounded-full bg-surface flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[32px]" data-icon="photo_camera">photo_camera</span>
+</div>
+<span class="font-label-md text-label-md tracking-wider">UPLOAD PHOTO</span>
+</div>
+</div>
+<!-- Fields -->
+<div class="space-y-stack-md">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Item Name</label>
+<input class="bg-transparent border-b border-outline-variant/40 py-2 font-body-md text-primary placeholder:text-outline-variant/60 focus:border-tertiary-fixed-dim transition-colors" placeholder="e.g. Silk Wrap Blouse" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Category</label>
+<select class="bg-transparent border-b border-outline-variant/40 py-2 font-body-md text-primary focus:border-tertiary-fixed-dim appearance-none transition-colors">
+<option>Jacket</option>
+<option>Shirt</option>
+<option>Coat</option>
+<option>Dress</option>
+<option>Trousers</option>
+<option>Skirt</option>
+</select>
+</div>
+<!-- Segmented Control -->
+<div class="flex flex-col gap-2">
+<label class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Body Coverage</label>
+<div class="flex bg-surface-container-low p-1 rounded-full border border-outline-variant/20">
+<button class="flex-1 py-2 font-label-md text-label-md rounded-full bg-white text-primary shadow-sm" type="button">Top</button>
+<button class="flex-1 py-2 font-label-md text-label-md text-outline-variant hover:text-primary transition-colors" type="button">Bottom</button>
+<button class="flex-1 py-2 font-label-md text-label-md text-outline-variant hover:text-primary transition-colors" type="button">Full Body</button>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Color</label>
+<div class="flex items-center gap-stack-md py-2 overflow-x-auto no-scrollbar">
+<div class="w-8 h-8 rounded-full bg-[#36454f] border-2 border-white shadow-sm ring-2 ring-primary cursor-pointer"></div>
+<div class="w-8 h-8 rounded-full bg-[#f0e0c8] border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
+<div class="w-8 h-8 rounded-full bg-[#ffffff] border border-outline-variant cursor-pointer hover:scale-110 transition-transform"></div>
+<div class="w-8 h-8 rounded-full bg-[#ecbda4] border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
+<div class="w-8 h-8 rounded-full bg-[#202f38] border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
+<button class="w-8 h-8 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center text-outline-variant" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="mt-stack-md bg-primary text-white py-4 rounded-lg font-label-md text-label-md uppercase tracking-[0.2em] shadow-lg hover:opacity-90 active:scale-95 transition-all" type="submit">
+                    Add to Collection
+                </button>
+</form>
+</div>
+<!-- Secondary Guidance -->
+<p class="mt-stack-lg font-body-md text-body-md text-outline text-center max-w-xs italic">
+            "Quality is remembered long after price is forgotten."
+        </p>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-margin-mobile pb-6 pt-2 bg-surface border-t border-outline-variant/30 shadow-[0px_-4px_20px_rgba(32,47,56,0.05)] z-50">
+<div class="flex flex-col items-center justify-center text-outline-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="checkroom">checkroom</span>
+<span class="font-label-sm text-label-sm mt-1">Closet</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary font-bold bg-secondary-fixed-dim/20 rounded-xl px-3 py-1 scale-105 transition-transform duration-200 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="add_circle" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="font-label-sm text-label-sm mt-1">Add</span>
+</div>
+<div class="flex flex-col items-center justify-center text-outline-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label-sm text-label-sm mt-1">Create</span>
+</div>
+<div class="flex flex-col items-center justify-center text-outline-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="auto_fix">auto_fix</span>
+<span class="font-label-sm text-label-sm mt-1">Outfits</span>
+</div>
+<div class="flex flex-col items-center justify-center text-outline-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for segmented control
+        const buttons = document.querySelectorAll('.flex.bg-surface-container-low button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => {
+                    b.classList.remove('bg-white', 'text-primary', 'shadow-sm');
+                    b.classList.add('text-outline-variant');
+                });
+                btn.classList.remove('text-outline-variant');
+                btn.classList.add('bg-white', 'text-primary', 'shadow-sm');
+            });
+        });
+
+        // Color selection interaction
+        const colors = document.querySelectorAll('.rounded-full.cursor-pointer');
+        colors.forEach(color => {
+            color.addEventListener('click', () => {
+                colors.forEach(c => c.classList.remove('ring-2', 'ring-primary', 'scale-110'));
+                color.classList.add('ring-2', 'ring-primary', 'scale-110');
+            });
+        });
+    </script>
+</body></html>
