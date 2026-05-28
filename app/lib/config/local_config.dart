@@ -11,7 +11,4 @@ class LocalConfig implements AppConfig {
 
   @override
   String get generationApiBaseUrl => 'http://localhost:8080';
-
-  @override
-  FirebaseOptions? get firebaseOptions => null;
 }

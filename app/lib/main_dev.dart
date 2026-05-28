@@ -10,21 +10,12 @@ import 'app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  const config = DevConfig();
-  final opts = config.firebaseOptions;
-
-  await Firebase.initializeApp(
-    options: FirebaseOptions(
-      apiKey: opts.apiKey,
-      appId: opts.appId,
-      messagingSenderId: opts.messagingSenderId,
-      projectId: opts.projectId,
-      storageBucket: opts.storageBucket,
-    ),
-  );
+  // Firebase reads credentials from google-services.json (Android)
+  // and GoogleService-Info.plist (iOS) — no inline options needed.
+  await Firebase.initializeApp();
 
   await setupServiceLocator(
-    config,
+    const DevConfig(),
     firebase: FirebaseInstances(
       firestore: FirebaseFirestore.instance,
       auth: FirebaseAuth.instance,
