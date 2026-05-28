@@ -24,7 +24,7 @@ class WardrobeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.go(AppConstants.routeAddItem),
+            onPressed: () => context.push(AppConstants.routeAddItem),
             tooltip: 'Add item',
           ),
         ],
@@ -99,7 +99,7 @@ class WardrobeScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go(AppConstants.routeAddItem),
+        onPressed: () => context.push(AppConstants.routeAddItem),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
