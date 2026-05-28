@@ -49,11 +49,23 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
       String? photoUrl;
       if (_photoFile != null) {
-        photoUrl = await storageService.uploadClothingPhoto(
-          userId: userId,
-          itemId: itemId,
-          file: _photoFile!,
-        );
+        try {
+          photoUrl = await storageService.uploadClothingPhoto(
+            userId: userId,
+            itemId: itemId,
+            file: _photoFile!,
+          );
+        } catch (e) {
+          // Photo upload is optional — item is saved with color swatch fallback.
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Photo upload failed — item saved without photo.'),
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+        }
       }
 
       final item = ClothingItem(
@@ -67,6 +79,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
       await wardrobeRepo.addItem(userId, item);
       if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save item: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
