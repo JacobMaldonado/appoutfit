@@ -1,0 +1,65 @@
+"""FastAPI application entry point."""
+
+from __future__ import annotations
+
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.api.routes import batch, metadata, suggestions
+from app.core.config import Environment, get_settings
+from app.core.firebase_client import initialise_firebase
+from app.providers.image_gen.bfl import BFLFluxProvider
+from app.providers.image_gen.mock import MockImageGenProvider
+from app.providers.llm.gemini import GeminiProvider
+from app.providers.llm.mock import MockLLMProvider
+from app.services.batch_service import BatchService
+from app.services.metadata_service import MetadataService
+from app.services.suggestion_service import SuggestionService
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # type: ignore[type-arg]
+    settings = get_settings()
+    logger.info("Starting Clo·set service [env=%s]", settings.env)
+
+    if settings.use_real_providers:
+        initialise_firebase(settings.firebase_service_account_json, settings.firebase_project_id)
+        llm = GeminiProvider(settings.gemini_api_key)
+        image_gen = BFLFluxProvider(settings.bfl_api_key)
+    else:
+        llm = MockLLMProvider()
+        image_gen = MockImageGenProvider()
+
+    suggestion_svc = SuggestionService(llm, image_gen)
+    app.state.metadata_service = MetadataService(llm)
+    app.state.suggestion_service = suggestion_svc
+    app.state.batch_service = BatchService(suggestion_svc)
+
+    yield
+    logger.info("Shutting down Clo·set service")
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Clo·set API",
+        description="Outfit suggestion and wardrobe metadata service",
+        version="1.0.0",
+        lifespan=lifespan,
+    )
+    app.include_router(metadata.router, prefix="/v1/metadata", tags=["metadata"])
+    app.include_router(suggestions.router, prefix="/v1/suggestions", tags=["suggestions"])
+    app.include_router(batch.router, prefix="/v1/batch-suggestions", tags=["batch"])
+
+    @app.get("/health")
+    async def health() -> dict:
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()

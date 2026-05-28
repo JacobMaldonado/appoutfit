@@ -59,3 +59,12 @@ app/web/firebase-messaging-sw.js
 *.keystore
 *.jks
 upload-keystore.jks
+
+# Python service
+service/.venv/
+service/.coverage
+service/__pycache__/
+service/**/__pycache__/
+service/.env
+service/**/__pycache__/
+service/**/*.pyc
