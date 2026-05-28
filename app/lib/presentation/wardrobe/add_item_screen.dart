@@ -40,6 +40,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   Future<void> _save() async {
     setState(() => _loading = true);
+    bool photoFailed = false;
     try {
       final authService = sl<AuthService>();
       final wardrobeRepo = sl<WardrobeRepository>();
@@ -57,14 +58,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
           );
         } catch (e) {
           // Photo upload is optional — item is saved with color swatch fallback.
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Photo upload failed — item saved without photo.'),
-                duration: Duration(seconds: 4),
-              ),
-            );
-          }
+          debugPrint('[AddItem] Photo upload failed: $e');
+          photoFailed = true;
         }
       }
 
@@ -78,11 +73,25 @@ class _AddItemScreenState extends State<AddItemScreen> {
       );
 
       await wardrobeRepo.addItem(userId, item);
-      if (mounted) context.pop();
+
+      if (mounted) {
+        final msg = photoFailed
+            ? 'Item added! (photo skipped — enable Firebase Storage to upload photos)'
+            : 'Item added to your closet!';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), duration: const Duration(seconds: 4)),
+        );
+        context.pop();
+      }
     } catch (e) {
+      debugPrint('[AddItem] Save failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save item: $e')),
+          SnackBar(
+            content: Text('Could not save item: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 6),
+          ),
         );
       }
     } finally {
