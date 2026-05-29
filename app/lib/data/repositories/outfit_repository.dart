@@ -3,7 +3,9 @@ import '../models/generation_batch.dart';
 
 abstract class OutfitRepository {
   Stream<List<Outfit>> watchOutfits(String userId);
-  Stream<GenerationBatch> watchBatch(String userId, String batchId);
+  /// Emits null while the history doc doesn't exist yet (pending), a
+  /// [GenerationBatch] once it appears, and errors on permission/network issues.
+  Stream<GenerationBatch?> watchBatch(String userId, String batchId);
   Future<List<Outfit>> getSavedOutfits(String userId);
   Future<List<GenerationBatch>> getHistory(String userId);
   Future<void> saveOutfit(String userId, String outfitId, {required bool saved});

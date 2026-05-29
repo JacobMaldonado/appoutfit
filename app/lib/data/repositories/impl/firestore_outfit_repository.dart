@@ -30,15 +30,19 @@ class FirestoreOutfitRepository implements OutfitRepository {
           .toList());
 
   @override
-  Stream<GenerationBatch> watchBatch(String userId, String batchId) {
+  Stream<GenerationBatch?> watchBatch(String userId, String batchId) {
     final path = '${AppConstants.usersCollection}/$userId/${AppConstants.historyCollection}/$batchId';
-    debugPrint('[repo] watchBatch path=$path');
-    return _history(userId).doc(batchId).snapshots().where((s) => s.exists).map(
-          (s) {
-            debugPrint('[repo] watchBatch snapshot exists=${s.exists} data=${s.data()}');
-            return GenerationBatch.fromJson({...s.data()!, 'id': s.id});
-          },
-        );
+    debugPrint('[repo] watchBatch subscribing to path=$path');
+    return _history(userId).doc(batchId).snapshots().map((s) {
+      debugPrint(
+        '[repo] watchBatch snapshot received: exists=${s.exists} '
+        'metadata.isFromCache=${s.metadata.isFromCache} data=${s.data()}',
+      );
+      if (!s.exists) return null;
+      return GenerationBatch.fromJson({...s.data()!, 'id': s.id});
+    }).handleError((Object err, StackTrace st) {
+      debugPrint('[repo] watchBatch stream error: $err\n$st');
+    });
   }
 
   @override

@@ -8,7 +8,7 @@ class LocalOutfitRepository implements OutfitRepository {
   final Map<String, List<Outfit>> _outfits = {};
   final Map<String, List<GenerationBatch>> _batches = {};
   final Map<String, StreamController<List<Outfit>>> _outfitControllers = {};
-  final Map<String, StreamController<GenerationBatch>> _batchControllers = {};
+  final Map<String, StreamController<GenerationBatch?>> _batchControllers = {};
 
   @override
   Stream<List<Outfit>> watchOutfits(String userId) {
@@ -18,10 +18,10 @@ class LocalOutfitRepository implements OutfitRepository {
   }
 
   @override
-  Stream<GenerationBatch> watchBatch(String userId, String batchId) {
+  Stream<GenerationBatch?> watchBatch(String userId, String batchId) {
     final key = '$userId:$batchId';
     _batchControllers[key] ??=
-        StreamController<GenerationBatch>.broadcast();
+        StreamController<GenerationBatch?>.broadcast();
     return _batchControllers[key]!.stream;
   }
 

@@ -154,18 +154,22 @@ class _BatchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<GenerationBatch>(
+    return StreamBuilder<GenerationBatch?>(
       stream: outfitRepo.watchBatch(userId, batchId),
       builder: (context, batchSnap) {
         debugPrint(
           '[suggest] watchBatch state=${batchSnap.connectionState} '
           'hasData=${batchSnap.hasData} hasError=${batchSnap.hasError} '
-          'error=${batchSnap.error}',
+          'data=${batchSnap.data} error=${batchSnap.error}',
         );
-        if (!batchSnap.hasData) {
-          if (batchSnap.hasError) {
-            return Center(child: Text('Stream error: ${batchSnap.error}'));
-          }
+
+        if (batchSnap.hasError) {
+          return Center(child: Text('Stream error: ${batchSnap.error}'));
+        }
+
+        // null data means doc doesn't exist yet (still generating)
+        final batch = batchSnap.data;
+        if (batch == null) {
           return const Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -178,7 +182,6 @@ class _BatchResults extends StatelessWidget {
           );
         }
 
-        final batch = batchSnap.data!;
         debugPrint('[suggest] batch received status=${batch.status} outfitIds=${batch.outfitIds}');
         if (batch.status == GenerationStatus.failed) {
           return const Center(child: Text('Generation failed. Try again.'));
