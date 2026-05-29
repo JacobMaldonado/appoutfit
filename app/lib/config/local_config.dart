@@ -10,5 +10,8 @@ class LocalConfig implements AppConfig {
   bool get useFirebase => false;
 
   @override
-  String get generationApiBaseUrl => 'http://localhost:8080';
+  String get generationApiBaseUrl => const String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8080',
+  );
 }

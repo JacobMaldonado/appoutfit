@@ -124,6 +124,32 @@ flutter run -t lib/main_dev.dart -d emulator-5554
 flutter run -t lib/main_dev.dart -d "iPhone 15 Pro"
 ```
 
+#### Pointing the dev app at the local FastAPI service
+
+The `generationApiBaseUrl` used by the dev build is configurable via `--dart-define`.
+This lets you run the `service/` on your machine and have the physical device or emulator call it directly — no code changes required.
+
+```bash
+# Start the local service first (from repo root)
+cd service && docker compose up
+
+# Physical device — use your machine's LAN IP
+cd app
+flutter run -t lib/main_dev.dart \
+  --dart-define=API_BASE_URL=http://192.168.100.45:8080
+
+# Android emulator — use the special alias for the host machine
+flutter run -t lib/main_dev.dart \
+  --dart-define=API_BASE_URL=http://10.0.2.2:8080
+
+# iOS Simulator — localhost works fine
+flutter run -t lib/main_dev.dart \
+  --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+> **Without the flag:** the dev build defaults to `https://api-dev.closetapp.com`.  
+> **`local` env:** also supports override; default is `http://localhost:8080`.
+
 ---
 
 ### Prod environment (Firebase prod project)

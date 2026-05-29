@@ -10,5 +10,8 @@ class DevConfig implements AppConfig {
   bool get useFirebase => true;
 
   @override
-  String get generationApiBaseUrl => 'https://api-dev.closetapp.com';
+  String get generationApiBaseUrl => const String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api-dev.closetapp.com',
+  );
 }
