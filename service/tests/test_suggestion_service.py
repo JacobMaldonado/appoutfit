@@ -24,7 +24,7 @@ def mock_image_gen() -> MockImageGenProvider:
 
 @pytest.fixture
 def service(mock_llm: MockLLMProvider, mock_image_gen: MockImageGenProvider) -> SuggestionService:
-    return SuggestionService(mock_llm, mock_image_gen)
+    return SuggestionService(mock_llm, mock_image_gen, use_firebase=False)
 
 
 _SAMPLE_WARDROBE = [

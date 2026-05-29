@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import io
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -88,13 +89,19 @@ class SuggestionService:
 
         combinations = await self._select_combinations(wardrobe, request.mood)
         batch_id = str(uuid.uuid4())
+        created_at = datetime.now(timezone.utc).isoformat()
 
+        outfit_ids: list[str] = []
         for idx, combo in enumerate(combinations):
             image_bytes = await self._build_outfit_image(wardrobe, combo.item_ids)
             mannequin_bytes = await self._generate_mannequin(image_bytes)
+            outfit_id = f"{batch_id}_{idx}"
             await self._upload_and_save(
-                request.user_id, batch_id, idx, combo, mannequin_bytes, request.mood
+                request.user_id, batch_id, idx, combo, mannequin_bytes, request.mood, created_at
             )
+            outfit_ids.append(outfit_id)
+
+        await self._write_history_batch(request.user_id, batch_id, request.mood, outfit_ids, created_at)
 
         return SuggestionResponse(combinations=combinations, batch_id=batch_id)
 
@@ -189,6 +196,7 @@ class SuggestionService:
         combo: OutfitCombination,
         image_bytes: bytes,
         mood: str,
+        created_at: str,
     ) -> None:
         if not self._use_firebase:
             return  # No-op in local env
@@ -208,6 +216,7 @@ class SuggestionService:
             "styleNote": combo.style_note,
             "imageUrl": image_url,
             "saved": False,
+            "createdAt": created_at,
         }
         (
             db.collection("users")
@@ -215,4 +224,31 @@ class SuggestionService:
             .collection("outfits")
             .document(f"{batch_id}_{idx}")
             .set(outfit_doc)
+        )
+
+    async def _write_history_batch(
+        self,
+        user_id: str,
+        batch_id: str,
+        mood: str,
+        outfit_ids: list[str],
+        created_at: str,
+    ) -> None:
+        """Write the history/batch document the app watches to show results."""
+        if not self._use_firebase:
+            return
+
+        db = firestore.client()
+        batch_doc = {
+            "mood": mood,
+            "status": "complete",
+            "outfitIds": outfit_ids,
+            "createdAt": created_at,
+        }
+        (
+            db.collection("users")
+            .document(user_id)
+            .collection("history")
+            .document(batch_id)
+            .set(batch_doc)
         )
