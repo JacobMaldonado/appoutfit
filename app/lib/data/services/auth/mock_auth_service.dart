@@ -44,6 +44,9 @@ class MockAuthService implements AuthService {
     _controller.add(null);
   }
 
+  @override
+  Future<String?> getIdToken() async => 'mock-firebase-id-token';
+
   Future<AppUser> _signIn() async {
     _current = _mockUser;
     _controller.add(_mockUser);

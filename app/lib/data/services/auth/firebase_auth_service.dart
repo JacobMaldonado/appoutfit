@@ -74,6 +74,9 @@ class FirebaseAuthService implements AuthService {
     await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
   }
 
+  @override
+  Future<String?> getIdToken() => _auth.currentUser?.getIdToken() ?? Future.value(null);
+
   AppUser? _toAppUser(User? user) {
     if (user == null) return null;
     return AppUser(

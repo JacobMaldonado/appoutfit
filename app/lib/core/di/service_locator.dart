@@ -72,6 +72,7 @@ void _registerFirebaseServices(
     () => RemoteGenerationService(
       config: sl<AppConfig>(),
       httpClient: sl<http.Client>(),
+      authService: sl<AuthService>(),
     ),
   );
 }

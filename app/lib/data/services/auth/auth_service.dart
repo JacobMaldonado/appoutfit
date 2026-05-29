@@ -31,4 +31,8 @@ abstract class AuthService {
     required String password,
   });
   Future<void> signOut();
+
+  /// Returns a fresh Firebase ID token for the current user, or null if
+  /// no user is signed in. Used to authenticate requests to the backend service.
+  Future<String?> getIdToken();
 }

@@ -1,16 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../config/app_config.dart';
+import '../auth/auth_service.dart';
 import 'generation_service.dart';
 import '../../../core/constants/app_constants.dart';
 
-/// Calls the remote generation API and returns the operationId.
+/// Calls the remote generation API and returns the batchId.
 /// Results arrive via a Firestore realtime subscription on history/{batchId}.
 class RemoteGenerationService implements GenerationService {
-  RemoteGenerationService({required this.config, required this.httpClient});
+  RemoteGenerationService({
+    required this.config,
+    required this.httpClient,
+    required this.authService,
+  });
 
   final AppConfig config;
   final http.Client httpClient;
+  final AuthService authService;
 
   @override
   Future<String> triggerGeneration({
@@ -21,10 +27,15 @@ class RemoteGenerationService implements GenerationService {
       '${config.generationApiBaseUrl}${AppConstants.generateEndpoint}',
     );
 
+    final idToken = await authService.getIdToken();
+
     final response = await httpClient.post(
       url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'userId': userId, 'mood': mood}),
+      headers: {
+        'Content-Type': 'application/json',
+        if (idToken != null) 'Authorization': 'Bearer $idToken',
+      },
+      body: jsonEncode({'user_id': userId, 'mood': mood}),
     );
 
     if (response.statusCode != 200) {
@@ -34,12 +45,12 @@ class RemoteGenerationService implements GenerationService {
     }
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final operationId = body['operationId'] as String?;
+    final batchId = body['batch_id'] as String?;
 
-    if (operationId == null || operationId.isEmpty) {
-      throw Exception('Generation API returned no operationId');
+    if (batchId == null || batchId.isEmpty) {
+      throw Exception('Generation API returned no batch_id');
     }
 
-    return operationId;
+    return batchId;
   }
 }
