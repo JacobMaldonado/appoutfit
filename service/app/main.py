@@ -40,7 +40,16 @@ async def lifespan(app: FastAPI):  # type: ignore[type-arg]
                 "FIREBASE_SERVICE_ACCOUNT_JSON is required when ENV != local. "
                 "Set it in your .env file (file path or base-64 JSON)."
             )
-        initialise_firebase(settings.firebase_service_account_json, settings.firebase_project_id)
+        if not settings.firebase_storage_bucket:
+            raise ValueError(
+                "FIREBASE_STORAGE_BUCKET is required when ENV != local. "
+                "Set it to your bucket name, e.g. 'my-project.firebasestorage.app'."
+            )
+        initialise_firebase(
+            settings.firebase_service_account_json,
+            settings.firebase_project_id,
+            settings.firebase_storage_bucket,
+        )
         llm = GeminiProvider(settings.gemini_api_key)
         image_gen = BFLFluxProvider(settings.bfl_api_key)
     else:

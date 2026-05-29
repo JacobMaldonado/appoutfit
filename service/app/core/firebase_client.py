@@ -11,7 +11,7 @@ _lock = threading.Lock()
 _initialised = False
 
 
-def initialise_firebase(service_account_json: str, project_id: str) -> None:
+def initialise_firebase(service_account_json: str, project_id: str, storage_bucket: str) -> None:
     """Initialise Firebase Admin SDK exactly once.
 
     *service_account_json* may be:
@@ -30,5 +30,8 @@ def initialise_firebase(service_account_json: str, project_id: str) -> None:
             decoded = base64.b64decode(service_account_json).decode()
             cred = credentials.Certificate(json.loads(decoded))
 
-        firebase_admin.initialize_app(cred, {"projectId": project_id})
+        firebase_admin.initialize_app(cred, {
+            "projectId": project_id,
+            "storageBucket": storage_bucket,
+        })
         _initialised = True

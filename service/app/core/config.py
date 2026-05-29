@@ -22,6 +22,8 @@ class Settings(BaseSettings):
 
     # Firebase (not required in local env)
     firebase_project_id: str = ""
+    # Storage bucket name, e.g. "my-project.appspot.com" or "my-project.firebasestorage.app"
+    firebase_storage_bucket: str = ""
     # Path to a service account JSON file, or base-64-encoded JSON string
     firebase_service_account_json: str = ""
 

@@ -10,8 +10,8 @@ from app.providers.llm.base import LLMProvider
 
 T = TypeVar("T", bound=BaseModel)
 
-_MODEL_NAME = "gemini-2.5-flash-lite-preview-06-17"
-_VISION_MODEL = "gemini-2.5-flash-lite-preview-06-17"
+_MODEL_NAME = "gemini-2.5-flash-lite"
+_VISION_MODEL = "gemini-2.5-flash-lite"
 
 
 class GeminiProvider(LLMProvider):
