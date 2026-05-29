@@ -1,8 +1,11 @@
 """Black Forest Labs Flux image generation provider.
 
 Uses the BFL async API:
-  POST https://api.bfl.ai/v1/flux-kontext-pro  (or flux-pro-1.1, configurable)
-  GET  https://api.bfl.ai/v1/get_result?id=...  (poll until ready)
+  POST https://api.bfl.ai/v1/flux-2-klein-4b   → returns { id, polling_url, ... }
+  GET  <polling_url>                             → poll until status == "Ready"
+
+Per BFL docs, the polling_url from the submit response MUST be used directly.
+Constructing /v1/get_result?id=... is not supported on the global endpoint.
 """
 
 import asyncio
@@ -11,8 +14,7 @@ import httpx
 
 from app.providers.image_gen.base import ImageGenProvider
 
-_SUBMIT_URL = "https://api.bfl.ai/v1/flux-pro-1.1"
-_RESULT_URL = "https://api.bfl.ai/v1/get_result"
+_SUBMIT_URL = "https://api.bfl.ai/v1/flux-2-klein-4b"
 _POLL_INTERVAL = 2.0
 _MAX_POLLS = 60
 
@@ -24,13 +26,14 @@ class BFLFluxProvider(ImageGenProvider):
 
     async def generate(self, prompt: str) -> bytes:
         async with httpx.AsyncClient(timeout=120) as client:
-            task_id = await self._submit(client, prompt)
-            image_url = await self._poll(client, task_id)
+            polling_url = await self._submit(client, prompt)
+            image_url = await self._poll(client, polling_url)
             response = await client.get(image_url)
             response.raise_for_status()
             return response.content
 
     async def _submit(self, client: httpx.AsyncClient, prompt: str) -> str:
+        """Submit a generation task; returns the polling_url from the response."""
         payload = {
             "prompt": prompt,
             "width": 512,
@@ -40,11 +43,12 @@ class BFLFluxProvider(ImageGenProvider):
         r = await client.post(_SUBMIT_URL, json=payload, headers=self._headers)
         r.raise_for_status()
         data = r.json()
-        return data["id"]
+        return data["polling_url"]
 
-    async def _poll(self, client: httpx.AsyncClient, task_id: str) -> str:
+    async def _poll(self, client: httpx.AsyncClient, polling_url: str) -> str:
+        """Poll the polling_url until the result is ready; returns the image URL."""
         for _ in range(_MAX_POLLS):
-            r = await client.get(_RESULT_URL, params={"id": task_id}, headers=self._headers)
+            r = await client.get(polling_url, headers=self._headers)
             r.raise_for_status()
             data = r.json()
             status = data.get("status")
