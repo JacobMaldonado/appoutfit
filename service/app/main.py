@@ -25,9 +25,21 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # type: ignore[type-arg]
     settings = get_settings()
-    logger.info("Starting Clo·set service [env=%s]", settings.env)
+    use_firebase = settings.use_real_providers
 
-    if settings.use_real_providers:
+    logger.info("=" * 60)
+    logger.info("  Clo·set API starting up")
+    logger.info("  ENV            : %s", settings.env)
+    logger.info("  Firebase       : %s", "enabled" if use_firebase else "disabled (local mocks)")
+    logger.info("  LLM / Image-gen: %s", "Gemini + BFL Flux" if use_firebase else "mocks")
+    logger.info("=" * 60)
+
+    if use_firebase:
+        if not settings.firebase_service_account_json:
+            raise ValueError(
+                "FIREBASE_SERVICE_ACCOUNT_JSON is required when ENV != local. "
+                "Set it in your .env file (file path or base-64 JSON)."
+            )
         initialise_firebase(settings.firebase_service_account_json, settings.firebase_project_id)
         llm = GeminiProvider(settings.gemini_api_key)
         image_gen = BFLFluxProvider(settings.bfl_api_key)
@@ -35,13 +47,13 @@ async def lifespan(app: FastAPI):  # type: ignore[type-arg]
         llm = MockLLMProvider()
         image_gen = MockImageGenProvider()
 
-    suggestion_svc = SuggestionService(llm, image_gen)
-    app.state.metadata_service = MetadataService(llm)
+    suggestion_svc = SuggestionService(llm, image_gen, use_firebase=use_firebase)
+    app.state.metadata_service = MetadataService(llm, use_firebase=use_firebase)
     app.state.suggestion_service = suggestion_svc
-    app.state.batch_service = BatchService(suggestion_svc)
+    app.state.batch_service = BatchService(suggestion_svc, use_firebase=use_firebase)
 
     yield
-    logger.info("Shutting down Clo·set service")
+    logger.info("Clo·set API shut down")
 
 
 def create_app() -> FastAPI:

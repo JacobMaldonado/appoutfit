@@ -16,10 +16,14 @@ _MOODS = ["casual", "work", "brunch", "night", "active"]
 
 
 class BatchService:
-    def __init__(self, suggestion_service: SuggestionService) -> None:
+    def __init__(self, suggestion_service: SuggestionService, use_firebase: bool = True) -> None:
         self._suggestion = suggestion_service
+        self._use_firebase = use_firebase
 
     async def run(self) -> BatchSuggestionResponse:
+        if not self._use_firebase:
+            return BatchSuggestionResponse(processed_users=0, total_batches=0)
+
         db = firestore.client()
         user_docs = list(db.collection("users").stream())
 

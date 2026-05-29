@@ -58,10 +58,28 @@ class _CombinationsWrapper(BaseModel):
     combinations: list[OutfitCombination] = Field(default_factory=list)
 
 
+_STUB_WARDROBE = [
+    {"id": "stub-shirt", "type": "shirt", "coverage": "top", "color": "#F9E8E8",
+     "pattern": "solid", "imageUrl": None},
+    {"id": "stub-jeans", "type": "jeans", "coverage": "bottom", "color": "#1A237E",
+     "pattern": "solid", "imageUrl": None},
+    {"id": "stub-jacket", "type": "jacket", "coverage": "layer", "color": "#2D2D2D",
+     "pattern": "solid", "imageUrl": None},
+    {"id": "stub-dress", "type": "dress", "coverage": "fullbody", "color": "#C9788A",
+     "pattern": "floral", "imageUrl": None},
+]
+
+
 class SuggestionService:
-    def __init__(self, llm: LLMProvider, image_gen: ImageGenProvider) -> None:
+    def __init__(
+        self,
+        llm: LLMProvider,
+        image_gen: ImageGenProvider,
+        use_firebase: bool = True,
+    ) -> None:
         self._llm = llm
         self._image_gen = image_gen
+        self._use_firebase = use_firebase
 
     async def generate(self, request: SuggestionRequest) -> SuggestionResponse:
         wardrobe = await self._fetch_wardrobe(request.user_id)
@@ -81,6 +99,9 @@ class SuggestionService:
         return SuggestionResponse(combinations=combinations, batch_id=batch_id)
 
     async def _fetch_wardrobe(self, user_id: str) -> list[dict[str, Any]]:
+        if not self._use_firebase:
+            return _STUB_WARDROBE  # Return stub data in local env
+
         db = firestore.client()
         docs = (
             db.collection("users")
@@ -169,6 +190,9 @@ class SuggestionService:
         image_bytes: bytes,
         mood: str,
     ) -> None:
+        if not self._use_firebase:
+            return  # No-op in local env
+
         bucket = storage.bucket()
         blob_path = f"users/{user_id}/suggestions/{batch_id}/{idx}.jpg"
         blob = bucket.blob(blob_path)
