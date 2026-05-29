@@ -14,9 +14,12 @@ Pipeline:
 from __future__ import annotations
 
 import io
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 import httpx
 from firebase_admin import firestore, storage
@@ -83,25 +86,36 @@ class SuggestionService:
         self._use_firebase = use_firebase
 
     async def generate(self, request: SuggestionRequest) -> SuggestionResponse:
+        logger.info("[suggest] START user=%s mood=%s", request.user_id, request.mood)
+
         wardrobe = await self._fetch_wardrobe(request.user_id)
+        logger.info("[suggest] wardrobe items fetched: %d", len(wardrobe))
         if not wardrobe:
+            logger.warning("[suggest] wardrobe empty — returning no results")
             return SuggestionResponse()
 
         combinations = await self._select_combinations(wardrobe, request.mood)
+        logger.info("[suggest] combinations selected: %d", len(combinations))
         batch_id = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc).isoformat()
+        logger.info("[suggest] batch_id=%s created_at=%s", batch_id, created_at)
 
         outfit_ids: list[str] = []
         for idx, combo in enumerate(combinations):
+            logger.info("[suggest] processing combo %d/%d items=%s", idx + 1, len(combinations), combo.item_ids)
             image_bytes = await self._build_outfit_image(wardrobe, combo.item_ids)
+            logger.info("[suggest] outfit image built: %d bytes", len(image_bytes))
             mannequin_bytes = await self._generate_mannequin(image_bytes)
+            logger.info("[suggest] mannequin image generated: %d bytes", len(mannequin_bytes))
             outfit_id = f"{batch_id}_{idx}"
             await self._upload_and_save(
                 request.user_id, batch_id, idx, combo, mannequin_bytes, request.mood, created_at
             )
             outfit_ids.append(outfit_id)
+            logger.info("[suggest] outfit %s saved", outfit_id)
 
         await self._write_history_batch(request.user_id, batch_id, request.mood, outfit_ids, created_at)
+        logger.info("[suggest] DONE batch_id=%s outfit_ids=%s", batch_id, outfit_ids)
 
         return SuggestionResponse(combinations=combinations, batch_id=batch_id)
 
@@ -236,8 +250,13 @@ class SuggestionService:
     ) -> None:
         """Write the history/batch document the app watches to show results."""
         if not self._use_firebase:
+            logger.debug("[suggest] _write_history_batch skipped (use_firebase=False)")
             return
 
+        logger.info(
+            "[suggest] writing history doc users/%s/history/%s outfit_ids=%s",
+            user_id, batch_id, outfit_ids,
+        )
         db = firestore.client()
         batch_doc = {
             "mood": mood,
@@ -252,3 +271,4 @@ class SuggestionService:
             .document(batch_id)
             .set(batch_doc)
         )
+        logger.info("[suggest] history doc written OK")

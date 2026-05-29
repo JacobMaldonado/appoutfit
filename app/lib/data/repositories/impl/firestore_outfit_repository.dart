@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/outfit.dart';
 import '../../models/generation_batch.dart';
 import '../outfit_repository.dart';
@@ -29,10 +30,16 @@ class FirestoreOutfitRepository implements OutfitRepository {
           .toList());
 
   @override
-  Stream<GenerationBatch> watchBatch(String userId, String batchId) =>
-      _history(userId).doc(batchId).snapshots().where((s) => s.exists).map(
-            (s) => GenerationBatch.fromJson({...s.data()!, 'id': s.id}),
-          );
+  Stream<GenerationBatch> watchBatch(String userId, String batchId) {
+    final path = '${AppConstants.usersCollection}/$userId/${AppConstants.historyCollection}/$batchId';
+    debugPrint('[repo] watchBatch path=$path');
+    return _history(userId).doc(batchId).snapshots().where((s) => s.exists).map(
+          (s) {
+            debugPrint('[repo] watchBatch snapshot exists=${s.exists} data=${s.data()}');
+            return GenerationBatch.fromJson({...s.data()!, 'id': s.id});
+          },
+        );
+  }
 
   @override
   Future<List<Outfit>> getSavedOutfits(String userId) async {

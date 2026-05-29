@@ -32,14 +32,17 @@ class _SuggestScreenState extends State<SuggestScreen> {
 
   Future<void> _generate() async {
     final userId = _authService.currentUser?.id ?? '';
+    debugPrint('[suggest] _generate() userId=$userId mood=${_selectedMood.name}');
     setState(() { _loading = true; _error = null; _activeBatchId = null; });
     try {
       final batchId = await _generationService.triggerGeneration(
         userId: userId,
         mood: _selectedMood.name,
       );
+      debugPrint('[suggest] triggerGeneration returned batchId=$batchId');
       setState(() => _activeBatchId = batchId);
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[suggest] triggerGeneration error: $e\n$st');
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -154,7 +157,15 @@ class _BatchResults extends StatelessWidget {
     return StreamBuilder<GenerationBatch>(
       stream: outfitRepo.watchBatch(userId, batchId),
       builder: (context, batchSnap) {
+        debugPrint(
+          '[suggest] watchBatch state=${batchSnap.connectionState} '
+          'hasData=${batchSnap.hasData} hasError=${batchSnap.hasError} '
+          'error=${batchSnap.error}',
+        );
         if (!batchSnap.hasData) {
+          if (batchSnap.hasError) {
+            return Center(child: Text('Stream error: ${batchSnap.error}'));
+          }
           return const Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -168,6 +179,7 @@ class _BatchResults extends StatelessWidget {
         }
 
         final batch = batchSnap.data!;
+        debugPrint('[suggest] batch received status=${batch.status} outfitIds=${batch.outfitIds}');
         if (batch.status == GenerationStatus.failed) {
           return const Center(child: Text('Generation failed. Try again.'));
         }
@@ -179,6 +191,12 @@ class _BatchResults extends StatelessWidget {
             final batchOutfits = allOutfits
                 .where((o) => batch.outfitIds.contains(o.id))
                 .toList();
+
+            debugPrint(
+              '[suggest] watchOutfits allOutfits=${allOutfits.length} '
+              'batchOutfits=${batchOutfits.length} '
+              'looking for ids=${batch.outfitIds}',
+            );
 
             if (batchOutfits.isEmpty) {
               return const Center(child: CircularProgressIndicator());
