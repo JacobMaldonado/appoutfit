@@ -50,9 +50,9 @@ abstract class AppTheme {
   static TextTheme _buildTextTheme(TextTheme base) {
     final playfair = GoogleFonts.playfairDisplayTextTheme(base);
     return playfair.copyWith(
-      bodyLarge: GoogleFonts.inter(fontSize: 18, height: 1.55),
-      bodyMedium: GoogleFonts.inter(fontSize: 16, height: 1.5),
-      bodySmall: GoogleFonts.inter(fontSize: 14, height: 1.43),
+      bodyLarge: GoogleFonts.inter(fontSize: 18, height: 1.55, color: Colors.black),
+      bodyMedium: GoogleFonts.inter(fontSize: 16, height: 1.5, color: Colors.black),
+      bodySmall: GoogleFonts.inter(fontSize: 14, height: 1.43, color: Colors.black),
       labelLarge: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w600,

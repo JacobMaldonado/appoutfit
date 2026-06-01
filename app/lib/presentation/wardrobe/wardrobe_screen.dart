@@ -119,7 +119,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 final allItems = snapshot.data ?? [];
                 if (allItems.isEmpty) {
                   return _EmptyWardrobe(
-                    onAdd: () => context.go(AppConstants.routeAddItem),
+                    onAdd: () => context.push(AppConstants.routeAddItem),
                   );
                 }
                 final items = _filtered(allItems);

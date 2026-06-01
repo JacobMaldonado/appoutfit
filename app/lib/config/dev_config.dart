@@ -12,6 +12,6 @@ class DevConfig implements AppConfig {
   @override
   String get generationApiBaseUrl => const String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api-dev.closetapp.com',
+    defaultValue: 'https://appoutfit-653872791433.us-central1.run.app',
   );
 }
