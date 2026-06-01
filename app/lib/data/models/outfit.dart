@@ -18,6 +18,21 @@ extension MoodX on Mood {
     }
   }
 
+  String get dresscode {
+    switch (this) {
+      case Mood.casual:
+        return 'Casual';
+      case Mood.work:
+        return 'Business Casual';
+      case Mood.brunch:
+        return 'Smart Casual';
+      case Mood.night:
+        return 'Night Out';
+      case Mood.active:
+        return 'Athleisure';
+    }
+  }
+
   String get emoji {
     switch (this) {
       case Mood.casual:
@@ -41,6 +56,8 @@ class Outfit extends Equatable {
   final bool saved;
   final DateTime createdAt;
   final String? batchId;
+  final String? imageUrl;
+  final String? styleNote;
 
   const Outfit({
     required this.id,
@@ -49,6 +66,8 @@ class Outfit extends Equatable {
     this.saved = false,
     required this.createdAt,
     this.batchId,
+    this.imageUrl,
+    this.styleNote,
   });
 
   factory Outfit.fromJson(Map<String, dynamic> json) => Outfit(
@@ -58,6 +77,8 @@ class Outfit extends Equatable {
         saved: (json['saved'] as bool?) ?? false,
         createdAt: DateTime.parse(json['createdAt'] as String),
         batchId: json['batchId'] as String?,
+        imageUrl: json['imageUrl'] as String?,
+        styleNote: json['styleNote'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -67,6 +88,8 @@ class Outfit extends Equatable {
         'saved': saved,
         'createdAt': createdAt.toIso8601String(),
         'batchId': batchId,
+        'imageUrl': imageUrl,
+        'styleNote': styleNote,
       };
 
   Outfit copyWith({
@@ -76,6 +99,8 @@ class Outfit extends Equatable {
     bool? saved,
     DateTime? createdAt,
     String? batchId,
+    String? imageUrl,
+    String? styleNote,
   }) =>
       Outfit(
         id: id ?? this.id,
@@ -84,8 +109,11 @@ class Outfit extends Equatable {
         saved: saved ?? this.saved,
         createdAt: createdAt ?? this.createdAt,
         batchId: batchId ?? this.batchId,
+        imageUrl: imageUrl ?? this.imageUrl,
+        styleNote: styleNote ?? this.styleNote,
       );
 
   @override
-  List<Object?> get props => [id, itemIds, mood, saved, createdAt, batchId];
+  List<Object?> get props =>
+      [id, itemIds, mood, saved, createdAt, batchId, imageUrl, styleNote];
 }

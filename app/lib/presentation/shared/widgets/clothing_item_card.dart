@@ -8,12 +8,10 @@ class ClothingItemCard extends StatelessWidget {
     super.key,
     required this.item,
     this.onTap,
-    this.onDelete,
   });
 
   final ClothingItem item;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -36,27 +34,17 @@ class ClothingItemCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                    child: item.photoUrl != null
-                        ? Image.network(
-                            item.photoUrl!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          )
-                        : _ColorSwatch(color: color, pattern: item.pattern),
-                  ),
-                  if (onDelete != null)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: _DeleteButton(onTap: onDelete!),
-                    ),
-                ],
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                child: item.photoUrl != null
+                    ? Image.network(
+                        item.photoUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      )
+                    : _ColorSwatch(color: color, pattern: item.pattern),
               ),
             ),
             Padding(
@@ -173,32 +161,6 @@ class _PatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _DeleteButton extends StatelessWidget {
-  const _DeleteButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        child: const Icon(Icons.close, size: 14, color: AppTheme.primary),
-      ),
-    );
-  }
 }
 
 Color _hexToColor(String hex) {

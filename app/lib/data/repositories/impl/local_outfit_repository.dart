@@ -18,6 +18,16 @@ class LocalOutfitRepository implements OutfitRepository {
   }
 
   @override
+  Stream<List<Outfit>> watchBatchOutfits(String userId, String batchId) {
+    // Filter in-memory outfits by batchId for the local mock.
+    _outfitControllers[userId] ??=
+        StreamController<List<Outfit>>.broadcast();
+    return _outfitControllers[userId]!.stream.map(
+      (outfits) => outfits.where((o) => o.batchId == batchId).toList(),
+    );
+  }
+
+  @override
   Stream<GenerationBatch?> watchBatch(String userId, String batchId) {
     final key = '$userId:$batchId';
     _batchControllers[key] ??=

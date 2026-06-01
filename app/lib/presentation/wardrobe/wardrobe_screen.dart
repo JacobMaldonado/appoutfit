@@ -9,8 +9,35 @@ import '../../data/services/auth/auth_service.dart';
 import '../shared/widgets/clothing_item_card.dart';
 import '../shared/widgets/hanger_divider.dart';
 
-class WardrobeScreen extends StatelessWidget {
+class WardrobeScreen extends StatefulWidget {
   const WardrobeScreen({super.key});
+
+  @override
+  State<WardrobeScreen> createState() => _WardrobeScreenState();
+}
+
+class _WardrobeScreenState extends State<WardrobeScreen> {
+  ClothingType? _filterType;
+  bool _showSearch = false;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ClothingItem> _filtered(List<ClothingItem> items) {
+    return items.where((item) {
+      final matchesType = _filterType == null || item.type == _filterType;
+      final q = _searchQuery.toLowerCase();
+      final matchesSearch = q.isEmpty ||
+          (item.name?.toLowerCase().contains(q) ?? false) ||
+          item.type.label.toLowerCase().contains(q);
+      return matchesType && matchesSearch;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,12 +47,28 @@ class WardrobeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Closet'),
+        title: _showSearch
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search by name or type...',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              )
+            : const Text('My Closet'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.push(AppConstants.routeAddItem),
-            tooltip: 'Add item',
+            icon: Icon(_showSearch ? Icons.close : Icons.search),
+            tooltip: _showSearch ? 'Close search' : 'Search',
+            onPressed: () => setState(() {
+              _showSearch = !_showSearch;
+              if (!_showSearch) {
+                _searchController.clear();
+                _searchQuery = '';
+              }
+            }),
           ),
         ],
       ),
@@ -34,6 +77,10 @@ class WardrobeScreen extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: HangerDivider(),
+          ),
+          _CategoryChips(
+            selected: _filterType,
+            onChanged: (t) => setState(() => _filterType = t),
           ),
           Expanded(
             child: StreamBuilder<List<ClothingItem>>(
@@ -69,10 +116,19 @@ class WardrobeScreen extends StatelessWidget {
                     ),
                   );
                 }
-                final items = snapshot.data ?? [];
-                if (items.isEmpty) {
+                final allItems = snapshot.data ?? [];
+                if (allItems.isEmpty) {
                   return _EmptyWardrobe(
                     onAdd: () => context.go(AppConstants.routeAddItem),
+                  );
+                }
+                final items = _filtered(allItems);
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No items match your filter.',
+                      style: TextStyle(color: AppTheme.outline),
+                    ),
                   );
                 }
                 return GridView.builder(
@@ -87,9 +143,9 @@ class WardrobeScreen extends StatelessWidget {
                   itemCount: items.length,
                   itemBuilder: (context, index) => ClothingItemCard(
                     item: items[index],
-                    onDelete: () => wardrobeRepo.deleteItem(
-                      userId,
-                      items[index].id,
+                    onTap: () => context.push(
+                      AppConstants.routeItemDetail,
+                      extra: items[index],
                     ),
                   ),
                 );
@@ -103,6 +159,42 @@ class WardrobeScreen extends StatelessWidget {
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _CategoryChips extends StatelessWidget {
+  const _CategoryChips({required this.selected, required this.onChanged});
+
+  final ClothingType? selected;
+  final ValueChanged<ClothingType?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: const Text('All'),
+              selected: selected == null,
+              onSelected: (_) => onChanged(null),
+            ),
+          ),
+          ...ClothingType.values.map((t) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(t.label),
+                  selected: selected == t,
+                  onSelected: (_) => onChanged(selected == t ? null : t),
+                ),
+              )),
+        ],
       ),
     );
   }

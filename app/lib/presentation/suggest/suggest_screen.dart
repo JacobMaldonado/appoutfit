@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/clothing_item.dart';
-import '../../data/models/generation_batch.dart';
 import '../../data/models/outfit.dart';
 import '../../data/repositories/outfit_repository.dart';
 import '../../data/repositories/wardrobe_repository.dart';
@@ -53,7 +54,16 @@ class _SuggestScreenState extends State<SuggestScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Suggest Outfit')),
+      appBar: AppBar(
+        title: const Text('Suggest Outfit'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_outlined),
+            tooltip: 'History',
+            onPressed: () => context.push(AppConstants.routeHistory),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           const Padding(
@@ -154,22 +164,21 @@ class _BatchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<GenerationBatch?>(
-      stream: outfitRepo.watchBatch(userId, batchId),
-      builder: (context, batchSnap) {
+    return StreamBuilder<List<Outfit>>(
+      stream: outfitRepo.watchBatchOutfits(userId, batchId),
+      builder: (context, outfitSnap) {
         debugPrint(
-          '[suggest] watchBatch state=${batchSnap.connectionState} '
-          'hasData=${batchSnap.hasData} hasError=${batchSnap.hasError} '
-          'data=${batchSnap.data} error=${batchSnap.error}',
+          '[suggest] watchBatchOutfits state=${outfitSnap.connectionState} '
+          'count=${outfitSnap.data?.length} hasError=${outfitSnap.hasError} '
+          'error=${outfitSnap.error}',
         );
 
-        if (batchSnap.hasError) {
-          return Center(child: Text('Stream error: ${batchSnap.error}'));
+        if (outfitSnap.hasError) {
+          return Center(child: Text('Error loading outfits: ${outfitSnap.error}'));
         }
 
-        // null data means doc doesn't exist yet (still generating)
-        final batch = batchSnap.data;
-        if (batch == null) {
+        final batchOutfits = outfitSnap.data ?? [];
+        if (batchOutfits.isEmpty) {
           return const Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -182,64 +191,60 @@ class _BatchResults extends StatelessWidget {
           );
         }
 
-        debugPrint('[suggest] batch received status=${batch.status} outfitIds=${batch.outfitIds}');
-        if (batch.status == GenerationStatus.failed) {
-          return const Center(child: Text('Generation failed. Try again.'));
-        }
+        return FutureBuilder<List<ClothingItem>>(
+          future: wardrobeRepo.getItems(userId),
+          builder: (context, wardrobeSnap) {
+            final items = {
+              for (final item in wardrobeSnap.data ?? []) item.id: item,
+            };
 
-        return StreamBuilder<List<Outfit>>(
-          stream: outfitRepo.watchOutfits(userId),
-          builder: (context, outfitSnap) {
-            final allOutfits = outfitSnap.data ?? [];
-            final batchOutfits = allOutfits
-                .where((o) => batch.outfitIds.contains(o.id))
-                .toList();
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: batchOutfits.length,
+              itemBuilder: (context, index) {
+                final outfit = batchOutfits[index];
+                final colors = outfit.itemIds
+                    .map((id) => items[id])
+                    .whereType<ClothingItem>()
+                    .map((item) => _hexToColor(item.colorHex))
+                    .toList();
 
-            debugPrint(
-              '[suggest] watchOutfits allOutfits=${allOutfits.length} '
-              'batchOutfits=${batchOutfits.length} '
-              'looking for ids=${batch.outfitIds}',
-            );
-
-            if (batchOutfits.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            return FutureBuilder<List<ClothingItem>>(
-              future: wardrobeRepo.getItems(userId),
-              builder: (context, wardrobeSnap) {
-                final items = {
-                  for (final item in wardrobeSnap.data ?? []) item.id: item,
-                };
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.8,
+                return OutfitCard(
+                  outfit: outfit,
+                  colorSwatches: colors,
+                  isSaved: outfit.saved,
+                  onTap: () => context.push(
+                    AppConstants.routeOutfitDetail,
+                    extra: {
+                      'outfit': outfit,
+                      'wardrobeItems': wardrobeSnap.data ?? <ClothingItem>[],
+                    },
                   ),
-                  itemCount: batchOutfits.length,
-                  itemBuilder: (context, index) {
-                    final outfit = batchOutfits[index];
-                    final colors = outfit.itemIds
-                        .map((id) => items[id])
-                        .whereType<ClothingItem>()
-                        .map((item) => _hexToColor(item.colorHex))
-                        .toList();
-
-                    return OutfitCard(
-                      outfit: outfit,
-                      colorSwatches: colors,
-                      isSaved: outfit.saved,
-                      onSave: () => outfitRepo.saveOutfit(
+                  onSave: () async {
+                    try {
+                      await outfitRepo.saveOutfit(
                         userId,
                         outfit.id,
                         saved: !outfit.saved,
-                      ),
-                    );
+                      );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Could not save outfit: $e'),
+                            backgroundColor:
+                                Theme.of(context).colorScheme.error,
+                          ),
+                        );
+                      }
+                    }
                   },
                 );
               },

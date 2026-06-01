@@ -3,14 +3,19 @@ import 'package:go_router/go_router.dart';
 import 'core/constants/app_constants.dart';
 import 'core/di/service_locator.dart';
 import 'core/theme/app_theme.dart';
+import 'data/models/clothing_item.dart';
+import 'data/models/outfit.dart';
 import 'data/services/auth/auth_service.dart';
 import 'presentation/auth/login_screen.dart';
 import 'presentation/auth/register_screen.dart';
 import 'presentation/wardrobe/wardrobe_screen.dart';
 import 'presentation/wardrobe/add_item_screen.dart';
+import 'presentation/wardrobe/item_detail_screen.dart';
 import 'presentation/suggest/suggest_screen.dart';
+import 'presentation/suggest/outfit_detail_screen.dart';
 import 'presentation/saved/saved_screen.dart';
 import 'presentation/history/history_screen.dart';
+import 'presentation/account/account_screen.dart';
 import 'presentation/shared/widgets/scaffold_with_bottom_nav.dart';
 
 class ClosetApp extends StatelessWidget {
@@ -57,6 +62,27 @@ final _router = GoRouter(
       path: AppConstants.routeAddItem,
       builder: (context, state) => const AddItemScreen(),
     ),
+    GoRoute(
+      path: AppConstants.routeItemDetail,
+      builder: (context, state) {
+        final item = state.extra as ClothingItem;
+        return ItemDetailScreen(item: item);
+      },
+    ),
+    GoRoute(
+      path: AppConstants.routeOutfitDetail,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return OutfitDetailScreen(
+          outfit: extra['outfit'] as Outfit,
+          wardrobeItems: extra['wardrobeItems'] as List<ClothingItem>,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppConstants.routeHistory,
+      builder: (context, state) => const HistoryScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           ScaffoldWithBottomNav(navigationShell: navigationShell),
@@ -88,8 +114,8 @@ final _router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: AppConstants.routeHistory,
-              builder: (context, state) => const HistoryScreen(),
+              path: AppConstants.routeAccount,
+              builder: (context, state) => const AccountScreen(),
             ),
           ],
         ),

@@ -48,9 +48,9 @@ class _ClosetBottomNav extends StatelessWidget {
       label: 'Saved',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.history_outlined),
-      activeIcon: Icon(Icons.history),
-      label: 'History',
+      icon: Icon(Icons.person_outline),
+      activeIcon: Icon(Icons.person),
+      label: 'Account',
     ),
   ];
 

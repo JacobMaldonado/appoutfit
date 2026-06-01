@@ -4,6 +4,17 @@ import '../../models/clothing_item.dart';
 import '../wardrobe_repository.dart';
 import '../../../core/constants/app_constants.dart';
 
+String _toIso(dynamic value) {
+  if (value is Timestamp) return value.toDate().toIso8601String();
+  if (value is String && value.isNotEmpty) return value;
+  return DateTime.now().toIso8601String();
+}
+
+Map<String, dynamic> _normalize(Map<String, dynamic> data) => {
+      ...data,
+      'createdAt': _toIso(data['createdAt']),
+    };
+
 class FirestoreWardrobeRepository implements WardrobeRepository {
   FirestoreWardrobeRepository(this._firestore);
 
@@ -19,7 +30,7 @@ class FirestoreWardrobeRepository implements WardrobeRepository {
   Stream<List<ClothingItem>> watchItems(String userId) {
     return _collection(userId).snapshots().map(
           (snap) => snap.docs
-              .map((d) => ClothingItem.fromJson({...d.data(), 'id': d.id}))
+              .map((d) => ClothingItem.fromJson(_normalize({...d.data(), 'id': d.id})))
               .toList(),
         );
   }
@@ -28,7 +39,7 @@ class FirestoreWardrobeRepository implements WardrobeRepository {
   Future<List<ClothingItem>> getItems(String userId) async {
     final snap = await _collection(userId).get();
     return snap.docs
-        .map((d) => ClothingItem.fromJson({...d.data(), 'id': d.id}))
+        .map((d) => ClothingItem.fromJson(_normalize({...d.data(), 'id': d.id})))
         .toList();
   }
 

@@ -16,7 +16,9 @@ abstract class AppConstants {
   static const String routeSaved = '/saved';
   static const String routeHistory = '/history';
 
-  // Generation API endpoints
+  static const String routeItemDetail = '/wardrobe/item-detail';
+  static const String routeOutfitDetail = '/outfit-detail';
+  static const String routeAccount = '/account';
   static const String generateEndpoint = '/v1/suggestions';
 
   // Supported mood values (kept in sync with Mood enum)

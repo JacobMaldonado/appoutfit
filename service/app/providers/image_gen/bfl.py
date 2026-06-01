@@ -6,9 +6,13 @@ Uses the BFL async API:
 
 Per BFL docs, the polling_url from the submit response MUST be used directly.
 Constructing /v1/get_result?id=... is not supported on the global endpoint.
+
+The endpoint also supports image-to-image editing via the `input_image` field,
+which accepts a base64-encoded data URI (data:image/jpeg;base64,...).
 """
 
 import asyncio
+import base64
 
 import httpx
 
@@ -24,22 +28,31 @@ class BFLFluxProvider(ImageGenProvider):
         self._api_key = api_key
         self._headers = {"x-key": api_key, "Content-Type": "application/json"}
 
-    async def generate(self, prompt: str) -> bytes:
+    async def generate(self, prompt: str, input_image: bytes | None = None) -> bytes:
         async with httpx.AsyncClient(timeout=120) as client:
-            polling_url = await self._submit(client, prompt)
+            polling_url = await self._submit(client, prompt, input_image)
             image_url = await self._poll(client, polling_url)
             response = await client.get(image_url)
             response.raise_for_status()
             return response.content
 
-    async def _submit(self, client: httpx.AsyncClient, prompt: str) -> str:
+    async def _submit(
+        self,
+        client: httpx.AsyncClient,
+        prompt: str,
+        input_image: bytes | None,
+    ) -> str:
         """Submit a generation task; returns the polling_url from the response."""
-        payload = {
+        payload: dict = {
             "prompt": prompt,
             "width": 512,
             "height": 768,
             "output_format": "jpeg",
         }
+        if input_image is not None:
+            b64 = base64.b64encode(input_image).decode("utf-8")
+            payload["input_image"] = f"data:image/jpeg;base64,{b64}"
+
         r = await client.post(_SUBMIT_URL, json=payload, headers=self._headers)
         r.raise_for_status()
         data = r.json()
@@ -58,3 +71,4 @@ class BFLFluxProvider(ImageGenProvider):
                 raise RuntimeError(f"BFL generation failed: {data}")
             await asyncio.sleep(_POLL_INTERVAL)
         raise TimeoutError("BFL generation timed out")
+

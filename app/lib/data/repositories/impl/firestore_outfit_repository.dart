@@ -5,6 +5,19 @@ import '../../models/generation_batch.dart';
 import '../outfit_repository.dart';
 import '../../../core/constants/app_constants.dart';
 
+/// Converts a Firestore field that may be a [Timestamp], a [String], or null
+/// into an ISO-8601 [String] safe to pass to [DateTime.parse].
+String _toIso(dynamic value) {
+  if (value is Timestamp) return value.toDate().toIso8601String();
+  if (value is String && value.isNotEmpty) return value;
+  return DateTime.now().toIso8601String();
+}
+
+Map<String, dynamic> _normalizeOutfit(Map<String, dynamic> data) => {
+      ...data,
+      'createdAt': _toIso(data['createdAt']),
+    };
+
 class FirestoreOutfitRepository implements OutfitRepository {
   FirestoreOutfitRepository(this._firestore);
 
@@ -26,8 +39,24 @@ class FirestoreOutfitRepository implements OutfitRepository {
   Stream<List<Outfit>> watchOutfits(String userId) => _outfits(userId)
       .snapshots()
       .map((s) => s.docs
-          .map((d) => Outfit.fromJson({...d.data(), 'id': d.id}))
+          .map((d) => Outfit.fromJson(_normalizeOutfit({...d.data(), 'id': d.id})))
           .toList());
+
+  @override
+  Stream<List<Outfit>> watchBatchOutfits(String userId, String batchId) {
+    debugPrint('[repo] watchBatchOutfits userId=$userId batchId=$batchId');
+    return _outfits(userId)
+        .where('batchId', isEqualTo: batchId)
+        .snapshots()
+        .map((s) {
+      debugPrint('[repo] watchBatchOutfits snapshot count=${s.docs.length}');
+      return s.docs
+          .map((d) => Outfit.fromJson(_normalizeOutfit({...d.data(), 'id': d.id})))
+          .toList();
+    }).handleError((Object err, StackTrace st) {
+      debugPrint('[repo] watchBatchOutfits stream error: $err\n$st');
+    });
+  }
 
   @override
   Stream<GenerationBatch?> watchBatch(String userId, String batchId) {
@@ -50,7 +79,7 @@ class FirestoreOutfitRepository implements OutfitRepository {
     final snap =
         await _outfits(userId).where('saved', isEqualTo: true).get();
     return snap.docs
-        .map((d) => Outfit.fromJson({...d.data(), 'id': d.id}))
+        .map((d) => Outfit.fromJson(_normalizeOutfit({...d.data(), 'id': d.id})))
         .toList();
   }
 
@@ -61,7 +90,8 @@ class FirestoreOutfitRepository implements OutfitRepository {
         .limit(50)
         .get();
     return snap.docs
-        .map((d) => GenerationBatch.fromJson({...d.data(), 'id': d.id}))
+        .map((d) => GenerationBatch.fromJson(
+            {...d.data(), 'id': d.id, 'createdAt': _toIso(d.data()['createdAt'])}))
         .toList();
   }
 

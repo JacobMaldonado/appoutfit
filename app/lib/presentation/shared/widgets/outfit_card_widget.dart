@@ -7,37 +7,57 @@ class OutfitCard extends StatelessWidget {
     super.key,
     required this.outfit,
     required this.colorSwatches,
+    this.onTap,
     this.onSave,
     this.isSaved = false,
   });
 
   final Outfit outfit;
   final List<Color> colorSwatches;
+  final VoidCallback? onTap;
   final VoidCallback? onSave;
   final bool isSaved;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF36454F).withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF36454F).withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(24)),
-              child: _OutfitPreview(colors: colorSwatches),
+              child: outfit.imageUrl != null
+                  ? Image.network(
+                      outfit.imageUrl!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          color: AppTheme.champagne,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stack) =>
+                          _OutfitPreview(colors: colorSwatches),
+                    )
+                  : _OutfitPreview(colors: colorSwatches),
             ),
           ),
           Padding(
@@ -46,14 +66,32 @@ class OutfitCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    outfit.mood.label,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
-                      letterSpacing: 0.5,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        outfit.mood.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      if (outfit.styleNote != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          outfit.styleNote!,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.outline,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 if (onSave != null)
@@ -69,8 +107,9 @@ class OutfitCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      ), // Column
+    ), // Container
+  ); // GestureDetector
   }
 }
 

@@ -15,5 +15,5 @@ _WHITE_1PX_PNG = (
 
 
 class MockImageGenProvider(ImageGenProvider):
-    async def generate(self, prompt: str) -> bytes:  # noqa: ARG002
+    async def generate(self, prompt: str, input_image: bytes | None = None) -> bytes:  # noqa: ARG002
         return _WHITE_1PX_PNG

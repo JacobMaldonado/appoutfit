@@ -85,6 +85,7 @@ extension ClothingTypeX on ClothingType {
 
 class ClothingItem extends Equatable {
   final String id;
+  final String? name;
   final ClothingType type;
   final String colorHex;
   final ClothingPattern pattern;
@@ -93,6 +94,7 @@ class ClothingItem extends Equatable {
 
   const ClothingItem({
     required this.id,
+    this.name,
     required this.type,
     required this.colorHex,
     required this.pattern,
@@ -104,15 +106,18 @@ class ClothingItem extends Equatable {
 
   factory ClothingItem.fromJson(Map<String, dynamic> json) => ClothingItem(
         id: json['id'] as String,
+        name: json['name'] as String?,
         type: ClothingType.values.byName(json['type'] as String),
-        colorHex: json['colorHex'] as String,
-        pattern: ClothingPattern.values.byName(json['pattern'] as String),
+        colorHex: json['colorHex'] as String? ?? '#808080',
+        pattern: ClothingPattern.values.byName(
+            (json['pattern'] as String?) ?? ClothingPattern.solid.name),
         photoUrl: json['photoUrl'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'name': name,
         'type': type.name,
         'colorHex': colorHex,
         'pattern': pattern.name,
@@ -122,6 +127,7 @@ class ClothingItem extends Equatable {
 
   ClothingItem copyWith({
     String? id,
+    String? name,
     ClothingType? type,
     String? colorHex,
     ClothingPattern? pattern,
@@ -130,6 +136,7 @@ class ClothingItem extends Equatable {
   }) =>
       ClothingItem(
         id: id ?? this.id,
+        name: name ?? this.name,
         type: type ?? this.type,
         colorHex: colorHex ?? this.colorHex,
         pattern: pattern ?? this.pattern,
@@ -138,5 +145,6 @@ class ClothingItem extends Equatable {
       );
 
   @override
-  List<Object?> get props => [id, type, colorHex, pattern, photoUrl, createdAt];
+  List<Object?> get props =>
+      [id, name, type, colorHex, pattern, photoUrl, createdAt];
 }

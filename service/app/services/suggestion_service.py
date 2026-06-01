@@ -13,6 +13,7 @@ Pipeline:
 
 from __future__ import annotations
 
+import base64
 import io
 import logging
 import uuid
@@ -47,14 +48,10 @@ _COMBO_PROMPT_TEMPLATE = (
     "containing an array of objects with 'item_ids' (array of strings) and 'style_note' (string)."
 )
 
-_MANNEQUIN_VISION_PROMPT = (
-    "Describe the style of this outfit in detail for a fashion illustration prompt. "
-    "Focus on silhouette, fabrics, colours, and the overall aesthetic. "
-    "Keep it under 200 words."
-)
-
-_MANNEQUIN_GEN_PREFIX = (
-    "Fashion illustration, unanimated mannequin wearing: "
+_MANNEQUIN_PROMPT = (
+    "A professional fashion photo of a mannequin wearing the exact outfit shown in the "
+    "reference image. Clean white background, full body view, soft studio lighting. "
+    "Fashion editorial style."
 )
 
 
@@ -100,6 +97,12 @@ class SuggestionService:
         created_at = datetime.now(timezone.utc).isoformat()
         logger.info("[suggest] batch_id=%s created_at=%s", batch_id, created_at)
 
+        # Write a pending history entry immediately so the history log shows
+        # this generation is in progress.
+        await self._write_history_batch(
+            request.user_id, batch_id, request.mood, [], created_at, status="pending"
+        )
+
         outfit_ids: list[str] = []
         for idx, combo in enumerate(combinations):
             logger.info("[suggest] processing combo %d/%d items=%s", idx + 1, len(combinations), combo.item_ids)
@@ -114,7 +117,9 @@ class SuggestionService:
             outfit_ids.append(outfit_id)
             logger.info("[suggest] outfit %s saved", outfit_id)
 
-        await self._write_history_batch(request.user_id, batch_id, request.mood, outfit_ids, created_at)
+        await self._write_history_batch(
+            request.user_id, batch_id, request.mood, outfit_ids, created_at, status="complete"
+        )
         logger.info("[suggest] DONE batch_id=%s outfit_ids=%s", batch_id, outfit_ids)
 
         return SuggestionResponse(combinations=combinations, batch_id=batch_id)
@@ -154,34 +159,33 @@ class SuggestionService:
     async def _build_outfit_image(
         self, wardrobe: list[dict[str, Any]], item_ids: list[str]
     ) -> bytes:
+        """Build a vertical composite of outfit item images (or colored placeholders)."""
         id_to_item = {w["id"]: w for w in wardrobe}
-        image_urls = [
-            id_to_item[iid].get("imageUrl")
-            for iid in item_ids
-            if iid in id_to_item and id_to_item[iid].get("imageUrl")
-        ]
-
-        if not image_urls:
-            # No images available — return blank composite placeholder
-            canvas = Image.new("RGB", (_THUMB_SIZE[0], _THUMB_SIZE[1] * 2), (250, 245, 241))
-            buf = io.BytesIO()
-            canvas.save(buf, format="JPEG")
-            return buf.getvalue()
-
         thumbnails: list[Image.Image] = []
+
         async with httpx.AsyncClient(timeout=30) as client:
-            for url in image_urls:
-                r = await client.get(url)
-                if r.is_success:
-                    img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                    img.thumbnail(_THUMB_SIZE)
-                    thumbnails.append(img)
+            for iid in item_ids:
+                item = id_to_item.get(iid)
+                if not item:
+                    continue
+
+                image_url = item.get("photoUrl")
+                if image_url:
+                    r = await client.get(image_url)
+                    if r.is_success:
+                        try:
+                            img = Image.open(io.BytesIO(r.content)).convert("RGB")
+                            img.thumbnail(_THUMB_SIZE)
+                            thumbnails.append(img)
+                            continue
+                        except Exception:
+                            pass
+
+                # Fallback: colored placeholder tile with item type label
+                thumbnails.append(self._make_placeholder(item))
 
         if not thumbnails:
-            canvas = Image.new("RGB", (_THUMB_SIZE[0], _THUMB_SIZE[1] * 2), (250, 245, 241))
-            buf = io.BytesIO()
-            canvas.save(buf, format="JPEG")
-            return buf.getvalue()
+            thumbnails.append(Image.new("RGB", _THUMB_SIZE, (250, 245, 241)))
 
         total_height = sum(t.height for t in thumbnails)
         max_width = max(t.width for t in thumbnails)
@@ -195,12 +199,46 @@ class SuggestionService:
         composite.save(buf, format="JPEG", quality=85)
         return buf.getvalue()
 
+    @staticmethod
+    def _make_placeholder(item: dict[str, Any]) -> Image.Image:
+        """Create a solid-color tile with the item type as a label."""
+        from PIL import ImageDraw, ImageFont
+
+        color_hex = item.get("colorHex", "#C9788A")
+        item_type = item.get("type", "item").capitalize()
+
+        # Parse hex color, fall back to mauve
+        try:
+            hex_clean = color_hex.lstrip("#")
+            r, g, b = int(hex_clean[0:2], 16), int(hex_clean[2:4], 16), int(hex_clean[4:6], 16)
+            bg_color = (r, g, b)
+        except Exception:
+            bg_color = (201, 120, 138)  # mauve
+
+        img = Image.new("RGB", _THUMB_SIZE, bg_color)
+        draw = ImageDraw.Draw(img)
+
+        # Text color: white on dark, dark on light
+        luminance = 0.299 * bg_color[0] + 0.587 * bg_color[1] + 0.114 * bg_color[2]
+        text_color = (255, 255, 255) if luminance < 140 else (45, 45, 45)
+
+        try:
+            font = ImageFont.load_default(size=24)
+        except TypeError:
+            font = ImageFont.load_default()
+
+        bbox = draw.textbbox((0, 0), item_type, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+        x = (_THUMB_SIZE[0] - text_w) // 2
+        y = (_THUMB_SIZE[1] - text_h) // 2
+        draw.text((x, y), item_type, fill=text_color, font=font)
+        return img
+
     async def _generate_mannequin(self, composite_bytes: bytes) -> bytes:
-        style_description = await self._llm.describe_image(
-            composite_bytes, _MANNEQUIN_VISION_PROMPT
-        )
-        gen_prompt = _MANNEQUIN_GEN_PREFIX + style_description
-        return await self._image_gen.generate(gen_prompt)
+        """Send the composite reference image to BFL to generate a styled mannequin."""
+        logging.info("[suggest] composite image b64=%s", base64.b64encode(composite_bytes).decode("utf-8"))
+        return await self._image_gen.generate(_MANNEQUIN_PROMPT, input_image=composite_bytes)
 
     async def _upload_and_save(
         self,
@@ -247,20 +285,21 @@ class SuggestionService:
         mood: str,
         outfit_ids: list[str],
         created_at: str,
+        status: str = "complete",
     ) -> None:
-        """Write the history/batch document the app watches to show results."""
+        """Write (or overwrite) the history/batch document — used as a generation log."""
         if not self._use_firebase:
             logger.debug("[suggest] _write_history_batch skipped (use_firebase=False)")
             return
 
         logger.info(
-            "[suggest] writing history doc users/%s/history/%s outfit_ids=%s",
-            user_id, batch_id, outfit_ids,
+            "[suggest] writing history doc users/%s/history/%s status=%s outfit_ids=%s",
+            user_id, batch_id, status, outfit_ids,
         )
         db = firestore.client()
         batch_doc = {
             "mood": mood,
-            "status": "complete",
+            "status": status,
             "outfitIds": outfit_ids,
             "createdAt": created_at,
         }
@@ -271,4 +310,4 @@ class SuggestionService:
             .document(batch_id)
             .set(batch_doc)
         )
-        logger.info("[suggest] history doc written OK")
+        logger.info("[suggest] history doc written OK (status=%s)", status)

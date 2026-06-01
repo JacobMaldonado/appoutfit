@@ -18,12 +18,15 @@ class AddItemScreen extends StatefulWidget {
 }
 
 class _AddItemScreenState extends State<AddItemScreen> {
-  ClothingType _selectedType = ClothingType.shirt;
-  ClothingPattern _selectedPattern = ClothingPattern.solid;
+  ClothingType? _selectedType;
+  ClothingPattern? _selectedPattern;
   String _selectedColorHex = '#36454F';
   File? _photoFile;
+  bool _photoRequired = false; // shows error if user tried to save without photo
+  bool _typeRequired = false;  // shows error if user tried to save without type
   bool _loading = false;
 
+  final _nameController = TextEditingController();
   final _picker = ImagePicker();
   final _uuid = const Uuid();
 
@@ -33,12 +36,32 @@ class _AddItemScreenState extends State<AddItemScreen> {
     '#8B7355', '#F5DEB3', '#708090', '#E8D5C4',
   ];
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickPhoto() async {
     final xfile = await _picker.pickImage(source: ImageSource.gallery);
-    if (xfile != null) setState(() => _photoFile = File(xfile.path));
+    if (xfile != null) {
+      setState(() {
+        _photoFile = File(xfile.path);
+        _photoRequired = false;
+      });
+    }
   }
 
   Future<void> _save() async {
+    // Validate required fields
+    if (_photoFile == null) {
+      setState(() => _photoRequired = true);
+      return;
+    }
+    if (_selectedType == null) {
+      setState(() => _typeRequired = true);
+      return;
+    }
     setState(() => _loading = true);
     bool photoFailed = false;
     try {
@@ -57,7 +80,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
             file: _photoFile!,
           );
         } catch (e) {
-          // Photo upload is optional — item is saved with color swatch fallback.
           debugPrint('[AddItem] Photo upload failed: $e');
           photoFailed = true;
         }
@@ -65,9 +87,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
       final item = ClothingItem(
         id: itemId,
-        type: _selectedType,
+        name: _nameController.text.trim().isEmpty
+            ? null
+            : _nameController.text.trim(),
+        type: _selectedType!,
         colorHex: _selectedColorHex,
-        pattern: _selectedPattern,
+        pattern: _selectedPattern ?? ClothingPattern.solid,
         photoUrl: photoUrl,
         createdAt: DateTime.now(),
       );
@@ -118,24 +143,39 @@ class _AddItemScreenState extends State<AddItemScreen> {
             _PhotoPicker(
               photoFile: _photoFile,
               colorHex: _selectedColorHex,
+              hasError: _photoRequired,
               onTap: _pickPhoto,
             ),
             const SizedBox(height: 24),
-            _SectionLabel(label: 'CATEGORY'),
+            _SectionLabel(label: 'NAME (OPTIONAL)'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _nameController,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Favourite blue blouse',
+              ),
+            ),
+            const SizedBox(height: 24),
+            _SectionLabel(label: 'CATEGORY *'),
             const SizedBox(height: 8),
             _TypeSelector(
               selected: _selectedType,
-              onChanged: (t) => setState(() => _selectedType = t),
+              hasError: _typeRequired,
+              onChanged: (t) => setState(() {
+                _selectedType = t;
+                _typeRequired = false;
+              }),
             ),
             const SizedBox(height: 24),
-            _SectionLabel(label: 'PATTERN'),
+            _SectionLabel(label: 'PATTERN (OPTIONAL)'),
             const SizedBox(height: 8),
             _PatternSelector(
               selected: _selectedPattern,
               onChanged: (p) => setState(() => _selectedPattern = p),
             ),
             const SizedBox(height: 24),
-            _SectionLabel(label: 'COLOR'),
+            _SectionLabel(label: 'COLOR (OPTIONAL)'),
             const SizedBox(height: 8),
             _ColorSelector(
               colorOptions: _colorOptions,
@@ -165,64 +205,80 @@ class _PhotoPicker extends StatelessWidget {
     required this.photoFile,
     required this.colorHex,
     required this.onTap,
+    this.hasError = false,
   });
 
   final File? photoFile;
   final String colorHex;
   final VoidCallback onTap;
+  final bool hasError;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: AppTheme.champagne.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppTheme.outlineVariant.withValues(alpha: 0.5),
-            style: BorderStyle.solid,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: AppTheme.champagne.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: hasError ? Colors.red : AppTheme.outlineVariant.withValues(alpha: 0.5),
+                style: BorderStyle.solid,
+                width: hasError ? 1.5 : 1.0,
+              ),
+            ),
+            child: photoFile != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.file(photoFile!, fit: BoxFit.cover),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.surfaceCard,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.photo_camera_outlined,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'UPLOAD PHOTO',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Required to add item',
+                        style: TextStyle(fontSize: 11, color: AppTheme.outline),
+                      ),
+                    ],
+                  ),
           ),
         ),
-        child: photoFile != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Image.file(photoFile!, fit: BoxFit.cover),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.surfaceCard,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.photo_camera_outlined,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'UPLOAD PHOTO',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'or we\'ll use a color swatch',
-                    style: TextStyle(fontSize: 11, color: AppTheme.outline),
-                  ),
-                ],
-              ),
-      ),
+        if (hasError)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 12),
+            child: Text(
+              'Please add a photo',
+              style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -246,16 +302,24 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _TypeSelector extends StatelessWidget {
-  const _TypeSelector({required this.selected, required this.onChanged});
+  const _TypeSelector({
+    required this.selected,
+    required this.onChanged,
+    this.hasError = false,
+  });
 
-  final ClothingType selected;
+  final ClothingType? selected;
   final ValueChanged<ClothingType> onChanged;
+  final bool hasError;
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<ClothingType>(
       initialValue: selected,
-      decoration: const InputDecoration(),
+      decoration: InputDecoration(
+        hintText: 'Select category',
+        errorText: hasError ? 'Please select a category' : null,
+      ),
       items: ClothingType.values
           .map((t) => DropdownMenuItem(value: t, child: Text(t.label)))
           .toList(),
@@ -267,7 +331,7 @@ class _TypeSelector extends StatelessWidget {
 class _PatternSelector extends StatelessWidget {
   const _PatternSelector({required this.selected, required this.onChanged});
 
-  final ClothingPattern selected;
+  final ClothingPattern? selected;
   final ValueChanged<ClothingPattern> onChanged;
 
   @override

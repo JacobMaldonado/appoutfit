@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/clothing_item.dart';
@@ -31,9 +33,32 @@ class SavedScreen extends StatelessWidget {
             child: StreamBuilder<List<Outfit>>(
               stream: outfitRepo.watchOutfits(userId),
               builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Could not load saved outfits.\n${snapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppTheme.outline),
+                      ),
+                    ),
+                  );
+                }
+
                 final saved = (snapshot.data ?? [])
                     .where((o) => o.saved)
                     .toList();
+
+                debugPrint(
+                  '[saved] stream update: total=${snapshot.data?.length ?? 0} '
+                  'saved=${saved.length}',
+                );
 
                 if (saved.isEmpty) {
                   return const _EmptySaved();
@@ -69,11 +94,33 @@ class SavedScreen extends StatelessWidget {
                           outfit: outfit,
                           colorSwatches: colors,
                           isSaved: true,
-                          onSave: () => outfitRepo.saveOutfit(
-                            userId,
-                            outfit.id,
-                            saved: false,
+                          onTap: () => context.push(
+                            AppConstants.routeOutfitDetail,
+                            extra: {
+                              'outfit': outfit,
+                              'wardrobeItems':
+                                  wardrobeSnap.data ?? <ClothingItem>[],
+                            },
                           ),
+                          onSave: () async {
+                            try {
+                              await outfitRepo.saveOutfit(
+                                userId,
+                                outfit.id,
+                                saved: false,
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Could not unsave: $e'),
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
                         );
                       },
                     );
