@@ -139,7 +139,7 @@ class SuggestionService:
             logger.info("[suggest] processing combo %d/%d items=%s", idx + 1, len(combinations), combo.item_ids)
             image_bytes = await self._build_outfit_image(wardrobe, combo.item_ids)
             logger.info("[suggest] outfit image built: %d bytes", len(image_bytes))
-            mannequin_bytes = await self._generate_mannequin(image_bytes, request.user_id)
+            mannequin_bytes = await self._generate_mannequin(image_bytes, request.user_id, combo.style_note)
             logger.info("[suggest] mannequin image generated: %d bytes", len(mannequin_bytes))
             outfit_id = f"{batch_id}_{idx}"
             await self._upload_and_save(
@@ -266,14 +266,19 @@ class SuggestionService:
         draw.text((x, y), item_type, fill=text_color, font=font)
         return img
 
-    async def _generate_mannequin(self, composite_bytes: bytes, user_id: str) -> bytes:
+    async def _generate_mannequin(self, composite_bytes: bytes, user_id: str, style_note: str = "") -> bytes:
         """Generate a styled mannequin or virtual try-on image.
 
-        Image 1 (input_image)  → person photo or mannequin silhouette
+        Image 1 (input_image)   → person photo or mannequin silhouette
         Image 2 (input_image_2) → clothing composite built from wardrobe items
+
+        style_note is appended to every prompt so the model reflects the intended
+        style (e.g. "Casual Sunday brunch with relaxed denim and a linen top").
 
         Falls back to a single-image generic prompt when no reference is available.
         """
+        suffix = f" Style direction: {style_note.strip()}" if style_note and style_note.strip() else ""
+
         if self._use_firebase:
             profile = await self._fetch_user_profile(user_id)
             profile_photo_url = profile.get("profilePhotoUrl")
@@ -284,7 +289,7 @@ class SuggestionService:
                 if person_bytes:
                     logger.info("[suggest] virtual try-on with person photo, user=%s", user_id)
                     return await self._image_gen.generate(
-                        _PERSON_TRYON_PROMPT,
+                        _PERSON_TRYON_PROMPT + suffix,
                         input_image=person_bytes,
                         input_image_2=composite_bytes,
                     )
@@ -294,14 +299,14 @@ class SuggestionService:
                 if mannequin_bytes:
                     logger.info("[suggest] virtual try-on with mannequin body_type=%s user=%s", body_type, user_id)
                     return await self._image_gen.generate(
-                        _MANNEQUIN_TRYON_PROMPT,
+                        _MANNEQUIN_TRYON_PROMPT + suffix,
                         input_image=mannequin_bytes,
                         input_image_2=composite_bytes,
                     )
 
         # Fallback: clothing composite only with generic fashion prompt
         logger.info("[suggest] fallback: generic prompt, no reference person")
-        return await self._image_gen.generate(_MANNEQUIN_PROMPT, input_image=composite_bytes)
+        return await self._image_gen.generate(_MANNEQUIN_PROMPT + suffix, input_image=composite_bytes)
 
     async def _fetch_user_profile(self, user_id: str) -> dict[str, Any]:
         """Fetch user profile fields from Firestore."""
