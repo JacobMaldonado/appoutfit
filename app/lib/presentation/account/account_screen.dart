@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/notifiers/user_profile_notifier.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/services/auth/auth_service.dart';
@@ -18,6 +19,7 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   final _authService = sl<AuthService>();
+  final _profileNotifier = sl<UserProfileNotifier>();
   final _picker = ImagePicker();
   bool _uploading = false;
 
@@ -43,6 +45,7 @@ class _AccountScreenState extends State<AccountScreen> {
           .collection(AppConstants.usersCollection)
           .doc(user.id)
           .set({'profilePhotoUrl': url}, SetOptions(merge: true));
+      _profileNotifier.updateProfilePhoto(user.id, url);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile photo updated')),
@@ -82,13 +85,15 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: _authService.userStream,
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-        return Scaffold(
-          appBar: AppBar(title: const Text('Account')),
-          body: ListView(
+    return ListenableBuilder(
+      listenable: _profileNotifier,
+      builder: (context, _) => StreamBuilder(
+        stream: _authService.userStream,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+          return Scaffold(
+            appBar: AppBar(title: const Text('Account')),
+            body: ListView(
             padding: const EdgeInsets.all(24),
             children: [
               Center(
@@ -157,6 +162,26 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               const Divider(),
               ListTile(
+                leading: const Icon(Icons.accessibility_new_outlined),
+                title: const Text('Body type'),
+                subtitle: Text(
+                  _profileNotifier.bodyType != null
+                      ? _bodyTypeLabel(_profileNotifier.bodyType!)
+                      : 'Not set — tap to choose',
+                  style: TextStyle(
+                    color: _profileNotifier.bodyType != null
+                        ? AppTheme.outline
+                        : AppTheme.dustyRose,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(
+                  AppConstants.routeOnboarding,
+                  extra: {'fromAccount': true},
+                ),
+              ),
+              const Divider(),
+              ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text(
                   'Sign out',
@@ -168,8 +193,27 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         );
       },
-    );
+    ),
+  );
   }
+}
+
+String _bodyTypeLabel(String key) {
+  const labels = {
+    'fem_hourglass': 'Hourglass',
+    'fem_pear': 'Pear',
+    'fem_apple': 'Apple',
+    'fem_rectangle': 'Rectangle',
+    'fem_inverted_triangle': 'Inverted Triangle',
+    'fem_petite': 'Petite',
+    'masc_athletic': 'Athletic',
+    'masc_inverted_triangle': 'Inverted Triangle',
+    'masc_rectangle': 'Rectangle',
+    'masc_oval': 'Oval',
+    'masc_slim': 'Slim',
+    'masc_stocky': 'Stocky',
+  };
+  return labels[key] ?? key;
 }
 
 class _ProfileAvatar extends StatelessWidget {

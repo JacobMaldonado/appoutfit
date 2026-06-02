@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'core/constants/app_constants.dart';
 import 'core/di/service_locator.dart';
+import 'core/notifiers/user_profile_notifier.dart';
 import 'core/theme/app_theme.dart';
 import 'data/models/clothing_item.dart';
 import 'data/models/outfit.dart';
 import 'data/services/auth/auth_service.dart';
 import 'presentation/auth/login_screen.dart';
 import 'presentation/auth/register_screen.dart';
+import 'presentation/onboarding/onboarding_screen.dart';
 import 'presentation/wardrobe/wardrobe_screen.dart';
 import 'presentation/wardrobe/add_item_screen.dart';
 import 'presentation/wardrobe/item_detail_screen.dart';
@@ -34,15 +36,39 @@ class ClosetApp extends StatelessWidget {
 
 final _router = GoRouter(
   initialLocation: AppConstants.routeSplash,
+  refreshListenable: sl<UserProfileNotifier>(),
   redirect: (context, state) {
     final authService = sl<AuthService>();
+    final profileNotifier = sl<UserProfileNotifier>();
     final isAuthenticated = authService.currentUser != null;
-    final isAuthRoute = state.matchedLocation == AppConstants.routeLogin ||
-        state.matchedLocation == AppConstants.routeRegister ||
-        state.matchedLocation == AppConstants.routeSplash;
+    final loc = state.matchedLocation;
+    final isAuthRoute = loc == AppConstants.routeLogin ||
+        loc == AppConstants.routeRegister ||
+        loc == AppConstants.routeSplash;
+    final isOnboardingRoute = loc == AppConstants.routeOnboarding;
 
     if (!isAuthenticated && !isAuthRoute) return AppConstants.routeLogin;
-    if (isAuthenticated && isAuthRoute) return AppConstants.routeWardrobe;
+
+    if (isAuthenticated && isAuthRoute) {
+      if (profileNotifier.onboardingComplete == false) {
+        return AppConstants.routeOnboarding;
+      }
+      return AppConstants.routeWardrobe;
+    }
+
+    // Redirect to onboarding if profile loaded and not yet complete
+    if (isAuthenticated && !isAuthRoute && !isOnboardingRoute) {
+      if (profileNotifier.onboardingComplete == false) {
+        return AppConstants.routeOnboarding;
+      }
+    }
+
+    // Block re-visiting onboarding once complete
+    if (isAuthenticated && isOnboardingRoute &&
+        profileNotifier.onboardingComplete == true) {
+      return AppConstants.routeWardrobe;
+    }
+
     return null;
   },
   routes: [
@@ -57,6 +83,14 @@ final _router = GoRouter(
     GoRoute(
       path: AppConstants.routeRegister,
       builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: AppConstants.routeOnboarding,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final fromAccount = extra?['fromAccount'] as bool? ?? false;
+        return OnboardingScreen(fromAccount: fromAccount);
+      },
     ),
     GoRoute(
       path: AppConstants.routeAddItem,

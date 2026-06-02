@@ -17,6 +17,7 @@ import '../../data/services/generation/remote_generation_service.dart';
 import '../../data/services/storage/storage_service.dart';
 import '../../data/services/storage/mock_storage_service.dart';
 import '../../data/services/storage/firebase_storage_service.dart';
+import '../notifiers/user_profile_notifier.dart';
 
 final sl = GetIt.instance;
 
@@ -30,12 +31,18 @@ Future<void> setupServiceLocator(
 }) async {
   sl.registerSingleton<AppConfig>(config);
   sl.registerSingleton<http.Client>(http.Client());
+  sl.registerSingleton<UserProfileNotifier>(
+    UserProfileNotifier(useFirebase: config.useFirebase),
+  );
 
   if (config.useFirebase && firebase != null) {
     _registerFirebaseServices(firebase, config);
   } else {
     _registerLocalServices();
   }
+
+  // Initialize profile notifier after auth is registered
+  sl<UserProfileNotifier>().initialize(sl<AuthService>());
 }
 
 void _registerLocalServices() {

@@ -13,7 +13,6 @@ Pipeline:
 
 from __future__ import annotations
 
-import base64
 import io
 import logging
 import uuid
@@ -52,6 +51,40 @@ _MANNEQUIN_PROMPT = (
     "A professional fashion photo of a mannequin wearing the exact outfit shown in the "
     "reference image. Clean white background, full body view, soft studio lighting. "
     "Fashion editorial style."
+)
+
+_PERSON_TRYON_PROMPT = (
+    "Virtual try-on: The LEFT side of this image shows a person. "
+    "The RIGHT side shows the clothing items to wear. "
+    "Dress the person from the LEFT side in ALL the individual clothing items shown on the RIGHT side. "
+    "CRITICAL RULES: "
+    "1) Identify EACH separate garment piece (top, bottom, accessories, shoes, bags) — "
+    "they are SEPARATE items, not a single piece. "
+    "2) Reproduce EVERY item independently — if you see a shirt + shorts + bag, show ALL THREE as distinct pieces. "
+    "3) DO NOT merge multiple garments into one — a shirt and shorts are TWO separate items, not a dress. "
+    "4) Preserve exact garment structure for each piece — if sleeveless, keep sleeveless; "
+    "if short sleeves, keep short; maintain exact cut, length, and details. "
+    "5) Keep all colors, patterns, and textures identical to reference for each individual piece. "
+    "6) If garments are layered, show each layer distinctly. "
+    "7) Preserve person's face, body, pose, and background unchanged. "
+    "Photorealistic, accurate multi-piece outfit reproduction required."
+)
+
+_MANNEQUIN_TRYON_PROMPT = (
+    "Virtual try-on: The LEFT side of this image shows a mannequin. "
+    "The RIGHT side shows the clothing items to wear. "
+    "Dress the mannequin from the LEFT side in ALL the individual clothing items shown on the RIGHT side. "
+    "CRITICAL RULES: "
+    "1) Identify EACH separate garment piece (top, bottom, accessories) — "
+    "they are SEPARATE items, not a single piece. "
+    "2) Reproduce EVERY item independently — if you see a shirt + shorts + bag, show ALL THREE as distinct pieces. "
+    "3) DO NOT merge multiple garments into one. "
+    "4) Preserve exact garment structure for each piece — if sleeveless, keep sleeveless; "
+    "if short sleeves, keep short; maintain exact cut, length, and details. "
+    "5) Keep all colors, patterns, and textures identical to reference for each individual piece. "
+    "6) If garments are layered, show each layer distinctly. "
+    "7) Preserve mannequin's pose and clean background unchanged. "
+    "Photorealistic, accurate multi-piece outfit reproduction required."
 )
 
 
@@ -108,7 +141,7 @@ class SuggestionService:
             logger.info("[suggest] processing combo %d/%d items=%s", idx + 1, len(combinations), combo.item_ids)
             image_bytes = await self._build_outfit_image(wardrobe, combo.item_ids)
             logger.info("[suggest] outfit image built: %d bytes", len(image_bytes))
-            mannequin_bytes = await self._generate_mannequin(image_bytes)
+            mannequin_bytes = await self._generate_mannequin(image_bytes, request.user_id)
             logger.info("[suggest] mannequin image generated: %d bytes", len(mannequin_bytes))
             outfit_id = f"{batch_id}_{idx}"
             await self._upload_and_save(
@@ -235,10 +268,93 @@ class SuggestionService:
         draw.text((x, y), item_type, fill=text_color, font=font)
         return img
 
-    async def _generate_mannequin(self, composite_bytes: bytes) -> bytes:
-        """Send the composite reference image to BFL to generate a styled mannequin."""
-        logging.info("[suggest] composite image b64=%s", base64.b64encode(composite_bytes).decode("utf-8"))
+    async def _generate_mannequin(self, composite_bytes: bytes, user_id: str) -> bytes:
+        """Generate a styled mannequin or virtual try-on image.
+
+        If the user has a profile photo, performs a virtual try-on using that
+        photo as the reference person.  If the user has a body type set, uses the
+        corresponding mannequin silhouette from Firebase Storage.  Otherwise falls
+        back to the generic fashion-prompt with no reference person.
+        """
+        if self._use_firebase:
+            profile = await self._fetch_user_profile(user_id)
+            profile_photo_url = profile.get("profilePhotoUrl")
+            body_type = profile.get("bodyType")
+
+            if profile_photo_url:
+                person_bytes = await self._download_url_bytes(profile_photo_url)
+                if person_bytes:
+                    tryon = self._build_tryon_composite(person_bytes, composite_bytes)
+                    logger.info("[suggest] using person virtual try-on for user=%s", user_id)
+                    return await self._image_gen.generate(_PERSON_TRYON_PROMPT, input_image=tryon)
+
+            if body_type:
+                mannequin_bytes = await self._download_storage_bytes(f"mannequins/{body_type}.png")
+                if mannequin_bytes:
+                    tryon = self._build_tryon_composite(mannequin_bytes, composite_bytes)
+                    logger.info("[suggest] using mannequin try-on body_type=%s user=%s", body_type, user_id)
+                    return await self._image_gen.generate(_MANNEQUIN_TRYON_PROMPT, input_image=tryon)
+
+        # Fallback: clothing composite only
+        logging.info("[suggest] fallback prompt, composite b64 len=%d", len(composite_bytes))
         return await self._image_gen.generate(_MANNEQUIN_PROMPT, input_image=composite_bytes)
+
+    async def _fetch_user_profile(self, user_id: str) -> dict[str, Any]:
+        """Fetch user profile fields from Firestore."""
+        try:
+            db = firestore.client()
+            doc = db.collection("users").document(user_id).get()
+            return doc.to_dict() or {}
+        except Exception as e:
+            logger.warning("[suggest] _fetch_user_profile error: %s", e)
+            return {}
+
+    async def _download_url_bytes(self, url: str) -> bytes | None:
+        """Download image bytes from an HTTP/HTTPS URL."""
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                r = await client.get(url)
+                r.raise_for_status()
+                return r.content
+        except Exception as e:
+            logger.warning("[suggest] _download_url_bytes failed url=%s error=%s", url, e)
+            return None
+
+    async def _download_storage_bytes(self, blob_path: str) -> bytes | None:
+        """Download image bytes from Firebase Storage."""
+        try:
+            bucket = storage.bucket()
+            blob = bucket.blob(blob_path)
+            return blob.download_as_bytes()
+        except Exception as e:
+            logger.warning("[suggest] _download_storage_bytes failed path=%s error=%s", blob_path, e)
+            return None
+
+    @staticmethod
+    def _build_tryon_composite(reference_bytes: bytes, outfit_bytes: bytes) -> bytes:
+        """Create a side-by-side composite: reference person/mannequin (left) + outfit items (right)."""
+        PANEL_W, PANEL_H = 400, 600
+        bg_color = (250, 245, 241)
+
+        ref_img = Image.open(io.BytesIO(reference_bytes)).convert("RGB")
+        outfit_img = Image.open(io.BytesIO(outfit_bytes)).convert("RGB")
+
+        ref_img.thumbnail((PANEL_W, PANEL_H))
+        outfit_img.thumbnail((PANEL_W, PANEL_H))
+
+        canvas = Image.new("RGB", (PANEL_W * 2, PANEL_H), bg_color)
+
+        ref_x = (PANEL_W - ref_img.width) // 2
+        ref_y = (PANEL_H - ref_img.height) // 2
+        canvas.paste(ref_img, (ref_x, ref_y))
+
+        out_x = PANEL_W + (PANEL_W - outfit_img.width) // 2
+        out_y = (PANEL_H - outfit_img.height) // 2
+        canvas.paste(outfit_img, (out_x, out_y))
+
+        buf = io.BytesIO()
+        canvas.save(buf, format="JPEG", quality=85)
+        return buf.getvalue()
 
     async def _upload_and_save(
         self,

@@ -19,6 +19,7 @@ abstract class AppConstants {
   static const String routeItemDetail = '/wardrobe/item-detail';
   static const String routeOutfitDetail = '/outfit-detail';
   static const String routeAccount = '/account';
+  static const String routeOnboarding = '/onboarding';
   static const String generateEndpoint = '/v1/suggestions';
 
   // Supported mood values (kept in sync with Mood enum)
