@@ -81,7 +81,7 @@ _MANNEQUIN_TRYON_PROMPT = (
     " maintain exact cut, length, and details. "
     "5) Keep all colors, patterns, and textures identical to reference for each individual piece. "
     "6) If garments are layered, show each layer distinctly. "
-    "7) Preserve mannequin's pose, shape and clean background unchanged. "
+    "7) Preserve mannequin's pose, body shape, and clean background unchanged. The mannequin's body shape should not be distorted or altered in any way. "
     "Photorealistic, accurate multi-piece outfit reproduction required."
 )
 
