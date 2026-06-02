@@ -7,8 +7,9 @@ Uses the BFL async API:
 Per BFL docs, the polling_url from the submit response MUST be used directly.
 Constructing /v1/get_result?id=... is not supported on the global endpoint.
 
-The endpoint also supports image-to-image editing via the `input_image` field,
-which accepts a base64-encoded data URI (data:image/jpeg;base64,...).
+The endpoint supports up to 4 separate reference images via:
+  input_image, input_image_2, input_image_3, input_image_4
+Each accepts a base64-encoded data URI (data:image/jpeg;base64,...).
 """
 
 import asyncio
@@ -23,14 +24,24 @@ _POLL_INTERVAL = 2.0
 _MAX_POLLS = 60
 
 
+def _to_data_uri(image_bytes: bytes) -> str:
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    return f"data:image/jpeg;base64,{b64}"
+
+
 class BFLFluxProvider(ImageGenProvider):
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key
         self._headers = {"x-key": api_key, "Content-Type": "application/json"}
 
-    async def generate(self, prompt: str, input_image: bytes | None = None) -> bytes:
+    async def generate(
+        self,
+        prompt: str,
+        input_image: bytes | None = None,
+        input_image_2: bytes | None = None,
+    ) -> bytes:
         async with httpx.AsyncClient(timeout=120) as client:
-            polling_url = await self._submit(client, prompt, input_image)
+            polling_url = await self._submit(client, prompt, input_image, input_image_2)
             image_url = await self._poll(client, polling_url)
             response = await client.get(image_url)
             response.raise_for_status()
@@ -41,6 +52,7 @@ class BFLFluxProvider(ImageGenProvider):
         client: httpx.AsyncClient,
         prompt: str,
         input_image: bytes | None,
+        input_image_2: bytes | None,
     ) -> str:
         """Submit a generation task; returns the polling_url from the response."""
         payload: dict = {
@@ -50,8 +62,9 @@ class BFLFluxProvider(ImageGenProvider):
             "output_format": "jpeg",
         }
         if input_image is not None:
-            b64 = base64.b64encode(input_image).decode("utf-8")
-            payload["input_image"] = f"data:image/jpeg;base64,{b64}"
+            payload["input_image"] = _to_data_uri(input_image)
+        if input_image_2 is not None:
+            payload["input_image_2"] = _to_data_uri(input_image_2)
 
         r = await client.post(_SUBMIT_URL, json=payload, headers=self._headers)
         r.raise_for_status()

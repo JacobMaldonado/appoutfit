@@ -54,9 +54,8 @@ _MANNEQUIN_PROMPT = (
 )
 
 _PERSON_TRYON_PROMPT = (
-    "Virtual try-on: The LEFT side of this image shows a person. "
-    "The RIGHT side shows the clothing items to wear. "
-    "Dress the person from the LEFT side in ALL the individual clothing items shown on the RIGHT side. "
+    "Virtual try-on: Image 1 shows a person. Image 2 shows the clothing items to wear. "
+    "Dress the person from Image 1 in ALL the individual clothing items shown in Image 2. "
     "CRITICAL RULES: "
     "1) Identify EACH separate garment piece (top, bottom, accessories, shoes, bags) — "
     "they are SEPARATE items, not a single piece. "
@@ -71,9 +70,8 @@ _PERSON_TRYON_PROMPT = (
 )
 
 _MANNEQUIN_TRYON_PROMPT = (
-    "Virtual try-on: The LEFT side of this image shows a mannequin. "
-    "The RIGHT side shows the clothing items to wear. "
-    "Dress the mannequin from the LEFT side in ALL the individual clothing items shown on the RIGHT side. "
+    "Virtual try-on: Image 1 shows a mannequin. Image 2 shows the clothing items to wear. "
+    "Dress the mannequin from Image 1 in ALL the individual clothing items shown in Image 2. "
     "CRITICAL RULES: "
     "1) Identify EACH separate garment piece (top, bottom, accessories) — "
     "they are SEPARATE items, not a single piece. "
@@ -271,10 +269,10 @@ class SuggestionService:
     async def _generate_mannequin(self, composite_bytes: bytes, user_id: str) -> bytes:
         """Generate a styled mannequin or virtual try-on image.
 
-        If the user has a profile photo, performs a virtual try-on using that
-        photo as the reference person.  If the user has a body type set, uses the
-        corresponding mannequin silhouette from Firebase Storage.  Otherwise falls
-        back to the generic fashion-prompt with no reference person.
+        Image 1 (input_image)  → person photo or mannequin silhouette
+        Image 2 (input_image_2) → clothing composite built from wardrobe items
+
+        Falls back to a single-image generic prompt when no reference is available.
         """
         if self._use_firebase:
             profile = await self._fetch_user_profile(user_id)
@@ -284,19 +282,25 @@ class SuggestionService:
             if profile_photo_url:
                 person_bytes = await self._download_url_bytes(profile_photo_url)
                 if person_bytes:
-                    tryon = self._build_tryon_composite(person_bytes, composite_bytes)
-                    logger.info("[suggest] using person virtual try-on for user=%s", user_id)
-                    return await self._image_gen.generate(_PERSON_TRYON_PROMPT, input_image=tryon)
+                    logger.info("[suggest] virtual try-on with person photo, user=%s", user_id)
+                    return await self._image_gen.generate(
+                        _PERSON_TRYON_PROMPT,
+                        input_image=person_bytes,
+                        input_image_2=composite_bytes,
+                    )
 
             if body_type:
                 mannequin_bytes = await self._download_storage_bytes(f"mannequins/{body_type}.png")
                 if mannequin_bytes:
-                    tryon = self._build_tryon_composite(mannequin_bytes, composite_bytes)
-                    logger.info("[suggest] using mannequin try-on body_type=%s user=%s", body_type, user_id)
-                    return await self._image_gen.generate(_MANNEQUIN_TRYON_PROMPT, input_image=tryon)
+                    logger.info("[suggest] virtual try-on with mannequin body_type=%s user=%s", body_type, user_id)
+                    return await self._image_gen.generate(
+                        _MANNEQUIN_TRYON_PROMPT,
+                        input_image=mannequin_bytes,
+                        input_image_2=composite_bytes,
+                    )
 
-        # Fallback: clothing composite only
-        logging.info("[suggest] fallback prompt, composite b64 len=%d", len(composite_bytes))
+        # Fallback: clothing composite only with generic fashion prompt
+        logger.info("[suggest] fallback: generic prompt, no reference person")
         return await self._image_gen.generate(_MANNEQUIN_PROMPT, input_image=composite_bytes)
 
     async def _fetch_user_profile(self, user_id: str) -> dict[str, Any]:
@@ -342,32 +346,6 @@ class SuggestionService:
         except Exception as e:
             logger.warning("[suggest] _download_storage_bytes failed path=%s error=%s", blob_path, e)
             return None
-
-    @staticmethod
-    def _build_tryon_composite(reference_bytes: bytes, outfit_bytes: bytes) -> bytes:
-        """Create a side-by-side composite: reference person/mannequin (left) + outfit items (right)."""
-        PANEL_W, PANEL_H = 400, 600
-        bg_color = (250, 245, 241)
-
-        ref_img = Image.open(io.BytesIO(reference_bytes)).convert("RGB")
-        outfit_img = Image.open(io.BytesIO(outfit_bytes)).convert("RGB")
-
-        ref_img.thumbnail((PANEL_W, PANEL_H))
-        outfit_img.thumbnail((PANEL_W, PANEL_H))
-
-        canvas = Image.new("RGB", (PANEL_W * 2, PANEL_H), bg_color)
-
-        ref_x = (PANEL_W - ref_img.width) // 2
-        ref_y = (PANEL_H - ref_img.height) // 2
-        canvas.paste(ref_img, (ref_x, ref_y))
-
-        out_x = PANEL_W + (PANEL_W - outfit_img.width) // 2
-        out_y = (PANEL_H - outfit_img.height) // 2
-        canvas.paste(outfit_img, (out_x, out_y))
-
-        buf = io.BytesIO()
-        canvas.save(buf, format="JPEG", quality=85)
-        return buf.getvalue()
 
     async def _upload_and_save(
         self,
