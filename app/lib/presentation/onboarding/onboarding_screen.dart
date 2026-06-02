@@ -18,21 +18,21 @@ class _BodyType {
 }
 
 const _femTypes = [
-  _BodyType('fem_hourglass', 'Hourglass', 'fem'),
-  _BodyType('fem_pear', 'Pear', 'fem'),
-  _BodyType('fem_apple', 'Apple', 'fem'),
-  _BodyType('fem_rectangle', 'Rectangle', 'fem'),
-  _BodyType('fem_inverted_triangle', 'Inv. Triangle', 'fem'),
-  _BodyType('fem_petite', 'Petite', 'fem'),
+  _BodyType('F_Hourglass', 'Hourglass', 'fem'),
+  _BodyType('F_Pear_Triangle', 'Pear / Triangle', 'fem'),
+  _BodyType('F_Apple_Oval', 'Apple / Oval', 'fem'),
+  _BodyType('F_Rectangle_Athletic', 'Rectangle', 'fem'),
+  _BodyType('F_Inverted_Triangle', 'Inv. Triangle', 'fem'),
+  _BodyType('F_Petite_Slim', 'Petite / Slim', 'fem'),
 ];
 
 const _mascTypes = [
-  _BodyType('masc_athletic', 'Athletic', 'masc'),
-  _BodyType('masc_inverted_triangle', 'Inv. Triangle', 'masc'),
-  _BodyType('masc_rectangle', 'Rectangle', 'masc'),
-  _BodyType('masc_oval', 'Oval', 'masc'),
-  _BodyType('masc_slim', 'Slim', 'masc'),
-  _BodyType('masc_stocky', 'Stocky', 'masc'),
+  _BodyType('M_Athletic_Mesomorph', 'Athletic', 'masc'),
+  _BodyType('M_Trapezoid', 'Trapezoid', 'masc'),
+  _BodyType('M_Rectangle_Average', 'Rectangle', 'masc'),
+  _BodyType('M_Oval_DadBod', 'Oval / Dad Bod', 'masc'),
+  _BodyType('M_Slim_Ectomorph', 'Slim', 'masc'),
+  _BodyType('M_Stocky_Endomorph', 'Stocky', 'masc'),
 ];
 
 enum _Step { welcome, bodyType }

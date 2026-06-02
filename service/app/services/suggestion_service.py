@@ -321,7 +321,20 @@ class SuggestionService:
             return None
 
     async def _download_storage_bytes(self, blob_path: str) -> bytes | None:
-        """Download image bytes from Firebase Storage."""
+        """Download image bytes — tries local assets first, then Firebase Storage."""
+        import os
+        local_path = os.path.join(
+            os.path.dirname(__file__), "..", "assets", blob_path
+        )
+        local_path = os.path.normpath(local_path)
+        if os.path.exists(local_path):
+            try:
+                with open(local_path, "rb") as f:
+                    logger.info("[suggest] loaded mannequin from local assets: %s", local_path)
+                    return f.read()
+            except Exception as e:
+                logger.warning("[suggest] local asset read failed %s: %s", local_path, e)
+
         try:
             bucket = storage.bucket()
             blob = bucket.blob(blob_path)

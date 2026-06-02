@@ -200,18 +200,18 @@ class _AccountScreenState extends State<AccountScreen> {
 
 String _bodyTypeLabel(String key) {
   const labels = {
-    'fem_hourglass': 'Hourglass',
-    'fem_pear': 'Pear',
-    'fem_apple': 'Apple',
-    'fem_rectangle': 'Rectangle',
-    'fem_inverted_triangle': 'Inverted Triangle',
-    'fem_petite': 'Petite',
-    'masc_athletic': 'Athletic',
-    'masc_inverted_triangle': 'Inverted Triangle',
-    'masc_rectangle': 'Rectangle',
-    'masc_oval': 'Oval',
-    'masc_slim': 'Slim',
-    'masc_stocky': 'Stocky',
+    'F_Hourglass': 'Hourglass',
+    'F_Pear_Triangle': 'Pear / Triangle',
+    'F_Apple_Oval': 'Apple / Oval',
+    'F_Rectangle_Athletic': 'Rectangle',
+    'F_Inverted_Triangle': 'Inverted Triangle',
+    'F_Petite_Slim': 'Petite / Slim',
+    'M_Athletic_Mesomorph': 'Athletic',
+    'M_Trapezoid': 'Trapezoid',
+    'M_Rectangle_Average': 'Rectangle',
+    'M_Oval_DadBod': 'Oval / Dad Bod',
+    'M_Slim_Ectomorph': 'Slim',
+    'M_Stocky_Endomorph': 'Stocky',
   };
   return labels[key] ?? key;
 }
