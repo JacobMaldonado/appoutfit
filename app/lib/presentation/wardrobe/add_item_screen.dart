@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/services/background_removal_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/clothing_item.dart';
 import '../../data/repositories/wardrobe_repository.dart';
@@ -25,6 +26,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   bool _photoRequired = false; // shows error if user tried to save without photo
   bool _typeRequired = false;  // shows error if user tried to save without type
   bool _loading = false;
+  bool _processingPhoto = false; // true while bg removal ONNX model runs
 
   final _nameController = TextEditingController();
   final _picker = ImagePicker();
@@ -44,11 +46,29 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   Future<void> _pickPhoto() async {
     final xfile = await _picker.pickImage(source: ImageSource.gallery);
-    if (xfile != null) {
-      setState(() {
-        _photoFile = File(xfile.path);
-        _photoRequired = false;
-      });
+    if (xfile == null) return;
+
+    setState(() {
+      _processingPhoto = true;
+      _photoRequired = false;
+    });
+    try {
+      final rawFile = File(xfile.path);
+      final bgRemovedFile =
+          await sl<BackgroundRemovalService>().removeBackground(rawFile);
+      if (mounted) {
+        setState(() {
+          _photoFile = bgRemovedFile;
+          _processingPhoto = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _photoFile = File(xfile.path);
+          _processingPhoto = false;
+        });
+      }
     }
   }
 
@@ -144,7 +164,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
               photoFile: _photoFile,
               colorHex: _selectedColorHex,
               hasError: _photoRequired,
-              onTap: _pickPhoto,
+              processing: _processingPhoto,
+              onTap: _processingPhoto ? null : _pickPhoto,
             ),
             const SizedBox(height: 24),
             _SectionLabel(label: 'NAME (OPTIONAL)'),
@@ -206,12 +227,14 @@ class _PhotoPicker extends StatelessWidget {
     required this.colorHex,
     required this.onTap,
     this.hasError = false,
+    this.processing = false,
   });
 
   final File? photoFile;
   final String colorHex;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool hasError;
+  final bool processing;
 
   @override
   Widget build(BuildContext context) {
@@ -231,43 +254,62 @@ class _PhotoPicker extends StatelessWidget {
                 width: hasError ? 1.5 : 1.0,
               ),
             ),
-            child: photoFile != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.file(photoFile!, fit: BoxFit.cover),
+            child: processing
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(strokeWidth: 2),
+                        SizedBox(height: 12),
+                        Text(
+                          'REMOVING BACKGROUND…',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.surfaceCard,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.photo_camera_outlined,
-                          color: AppTheme.primary,
-                        ),
+                : photoFile != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.file(photoFile!, fit: BoxFit.cover),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.surfaceCard,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.photo_camera_outlined,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'UPLOAD PHOTO',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Required to add item',
+                            style: TextStyle(fontSize: 11, color: AppTheme.outline),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'UPLOAD PHOTO',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Required to add item',
-                        style: TextStyle(fontSize: 11, color: AppTheme.outline),
-                      ),
-                    ],
-                  ),
           ),
         ),
         if (hasError)
