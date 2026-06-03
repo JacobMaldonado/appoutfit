@@ -123,6 +123,7 @@ class ClothingItem extends Equatable {
         'pattern': pattern.name,
         'photoUrl': photoUrl,
         'createdAt': createdAt.toIso8601String(),
+        'pendingReview': false,
       };
 
   ClothingItem copyWith({
