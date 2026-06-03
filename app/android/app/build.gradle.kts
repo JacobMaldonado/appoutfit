@@ -45,5 +45,5 @@ flutter {
 }
 
 dependencies {
-    implementation("com.google.mlkit:subject-segmentation:16.0.0-beta1")
+    implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
 }
