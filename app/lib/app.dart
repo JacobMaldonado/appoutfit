@@ -13,6 +13,9 @@ import 'presentation/onboarding/onboarding_screen.dart';
 import 'presentation/wardrobe/wardrobe_screen.dart';
 import 'presentation/wardrobe/add_item_screen.dart';
 import 'presentation/wardrobe/item_detail_screen.dart';
+import 'presentation/wardrobe/mass_capture/mass_tutorial_screen.dart';
+import 'presentation/wardrobe/mass_capture/mass_camera_screen.dart';
+import 'presentation/wardrobe/mass_capture/mass_review_screen.dart';
 import 'presentation/suggest/suggest_screen.dart';
 import 'presentation/suggest/outfit_detail_screen.dart';
 import 'presentation/saved/saved_screen.dart';
@@ -116,6 +119,21 @@ final _router = GoRouter(
     GoRoute(
       path: AppConstants.routeHistory,
       builder: (context, state) => const HistoryScreen(),
+    ),
+    GoRoute(
+      path: AppConstants.routeMassTutorial,
+      builder: (context, state) => const MassTutorialScreen(),
+    ),
+    GoRoute(
+      path: AppConstants.routeMassCamera,
+      builder: (context, state) => const MassCameraScreen(),
+    ),
+    GoRoute(
+      path: AppConstants.routeMassReview,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return MassReviewScreen(sessionId: extra['sessionId'] as String);
+      },
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>

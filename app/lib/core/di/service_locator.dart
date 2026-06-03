@@ -18,6 +18,9 @@ import '../../data/services/storage/storage_service.dart';
 import '../../data/services/storage/mock_storage_service.dart';
 import '../../data/services/storage/firebase_storage_service.dart';
 import '../notifiers/user_profile_notifier.dart';
+import '../notifiers/mass_capture_notifier.dart';
+import '../services/background_removal_service.dart';
+import '../../data/services/classification/clothing_classification_service.dart';
 
 final sl = GetIt.instance;
 
@@ -31,6 +34,7 @@ Future<void> setupServiceLocator(
 }) async {
   sl.registerSingleton<AppConfig>(config);
   sl.registerSingleton<http.Client>(http.Client());
+  sl.registerSingleton<BackgroundRemovalService>(BackgroundRemovalService());
   sl.registerSingleton<UserProfileNotifier>(
     UserProfileNotifier(useFirebase: config.useFirebase),
   );
@@ -59,6 +63,7 @@ void _registerLocalServices() {
       wardrobeRepository: sl<WardrobeRepository>(),
     ),
   );
+  _registerCaptureServices();
 }
 
 void _registerFirebaseServices(
@@ -80,6 +85,24 @@ void _registerFirebaseServices(
       config: sl<AppConfig>(),
       httpClient: sl<http.Client>(),
       authService: sl<AuthService>(),
+    ),
+  );
+  _registerCaptureServices();
+}
+
+void _registerCaptureServices() {
+  sl.registerSingleton<ClothingClassificationService>(
+    ClothingClassificationService(
+      config: sl<AppConfig>(),
+      httpClient: sl<http.Client>(),
+      authService: sl<AuthService>(),
+    ),
+  );
+  sl.registerSingleton<MassCaptureNotifier>(
+    MassCaptureNotifier(
+      wardrobeRepo: sl<WardrobeRepository>(),
+      storageService: sl<StorageService>(),
+      classificationService: sl<ClothingClassificationService>(),
     ),
   );
 }

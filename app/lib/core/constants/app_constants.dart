@@ -20,7 +20,15 @@ abstract class AppConstants {
   static const String routeOutfitDetail = '/outfit-detail';
   static const String routeAccount = '/account';
   static const String routeOnboarding = '/onboarding';
+
+  // Mass upload routes
+  static const String routeMassTutorial = '/wardrobe/mass-tutorial';
+  static const String routeMassCamera = '/wardrobe/mass-camera';
+  static const String routeMassReview = '/wardrobe/mass-review';
+
+  // API endpoints
   static const String generateEndpoint = '/v1/suggestions';
+  static const String metadataEndpoint = '/v1/metadata';
 
   // Supported mood values (kept in sync with Mood enum)
   static const List<String> moods = [

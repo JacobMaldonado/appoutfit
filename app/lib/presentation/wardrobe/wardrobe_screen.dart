@@ -155,10 +155,111 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(AppConstants.routeAddItem),
+        onPressed: () => _showAddOptions(context),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showAddOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text('Add to Closet',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700, color: AppTheme.primary)),
+              const SizedBox(height: 20),
+              _AddOptionTile(
+                icon: Icons.add_a_photo_outlined,
+                title: 'Single Item',
+                subtitle: 'Add one clothing item',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push(AppConstants.routeAddItem);
+                },
+              ),
+              const SizedBox(height: 12),
+              _AddOptionTile(
+                icon: Icons.photo_library_outlined,
+                title: 'Mass Upload',
+                subtitle: 'Photograph multiple items at once',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push(AppConstants.routeMassTutorial);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddOptionTile extends StatelessWidget {
+  const _AddOptionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.champagne,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppTheme.primary, size: 28),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary)),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppTheme.outline)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                color: AppTheme.outlineVariant, size: 20),
+          ],
+        ),
       ),
     );
   }

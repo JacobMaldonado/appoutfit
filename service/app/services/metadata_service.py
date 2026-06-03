@@ -54,8 +54,9 @@ class MetadataService:
             {
                 "type": metadata.clothing_type.value,
                 "coverage": metadata.coverage.value,
-                "color": metadata.color,
+                "colorHex": metadata.color,
                 "pattern": metadata.pattern.value,
                 "shortDescription": metadata.short_description,
+                "status": "ready",
             }
         )

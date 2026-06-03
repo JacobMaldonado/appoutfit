@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../models/clothing_item.dart';
+import '../../models/capture_item.dart';
 import '../wardrobe_repository.dart';
 
 /// In-memory wardrobe repository for the local (mock) environment.
@@ -41,6 +42,23 @@ class LocalWardrobeRepository implements WardrobeRepository {
         (_store[userId] ?? []).where((i) => i.id != itemId).toList();
     _emit(userId);
   }
+
+  // --- Mass capture (no-op stubs for local env) ---
+
+  @override
+  Future<void> createCaptureItem(String userId, CaptureItem item) async {}
+
+  @override
+  Future<void> updateCaptureItem(String userId, CaptureItem item) async {}
+
+  @override
+  Stream<List<CaptureItem>> watchCaptureSession(
+          String userId, String sessionId) =>
+      Stream.value([]);
+
+  @override
+  Future<void> confirmCaptureSession(
+      String userId, List<CaptureItem> items) async {}
 
   void _emit(String userId) {
     _controllers[userId]?.add(List.unmodifiable(_store[userId] ?? []));

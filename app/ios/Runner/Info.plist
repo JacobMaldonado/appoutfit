@@ -49,6 +49,12 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Clo·set uses the camera to photograph your clothes for your digital wardrobe.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is required by the camera framework.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Clo·set needs access to your photo library to add clothing items.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
