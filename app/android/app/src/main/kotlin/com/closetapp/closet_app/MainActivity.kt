@@ -2,6 +2,10 @@ package com.closetapp.closet_app
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -30,24 +34,55 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun removeBackground(imagePath: String, result: MethodChannel.Result) {
-        Thread {
-            try {
-                // ML Kit Subject Segmentation is in beta; for now we apply a simple
-                // alpha-channel approach. Replace with ML Kit call when stable.
-                val bitmap = BitmapFactory.decodeFile(imagePath)
-                    ?: run { result.success(imagePath); return@Thread }
+        val bitmap = BitmapFactory.decodeFile(imagePath)
+        if (bitmap == null) {
+            result.success(imagePath)
+            return
+        }
 
-                // For now: pass through. Swap in ML Kit Subject Segmentation here.
-                val outputFile = File(imagePath).let {
-                    File(it.parent, it.nameWithoutExtension + "_bg_removed.png")
+        val inputImage = InputImage.fromBitmap(bitmap, 0)
+        val options = SubjectSegmenterOptions.Builder()
+            .enableForegroundConfidenceMask()
+            .build()
+        val segmenter = SubjectSegmentation.getClient(options)
+
+        segmenter.process(inputImage)
+            .addOnSuccessListener { segmentationResult ->
+                val mask = segmentationResult.foregroundConfidenceMask
+                if (mask == null) {
+                    result.success(imagePath)
+                    return@addOnSuccessListener
                 }
-                FileOutputStream(outputFile).use { out ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+
+                val width = bitmap.width
+                val height = bitmap.height
+                val output = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+
+                // Apply the confidence mask: pixels below 0.5 confidence become transparent.
+                for (y in 0 until height) {
+                    for (x in 0 until width) {
+                        val confidence = mask.get()
+                        if (confidence < 0.5f) {
+                            output.setPixel(x, y, Color.TRANSPARENT)
+                        }
+                    }
                 }
-                result.success(outputFile.absolutePath)
-            } catch (e: Exception) {
+                mask.rewind()
+
+                try {
+                    val outputFile = File(imagePath).let {
+                        File(it.parent, it.nameWithoutExtension + "_bg_removed.png")
+                    }
+                    FileOutputStream(outputFile).use { out ->
+                        output.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                    result.success(outputFile.absolutePath)
+                } catch (e: Exception) {
+                    result.success(imagePath)
+                }
+            }
+            .addOnFailureListener {
                 result.success(imagePath)
             }
-        }.start()
     }
 }

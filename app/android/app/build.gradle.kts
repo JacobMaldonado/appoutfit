@@ -43,3 +43,7 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("com.google.mlkit:subject-segmentation:16.0.0-beta1")
+}

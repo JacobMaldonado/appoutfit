@@ -94,18 +94,14 @@ class _MassCameraScreenState extends State<MassCameraScreen>
       final notifier = sl<MassCaptureNotifier>();
       final userId = sl<AuthService>().currentUser?.id ?? '';
 
+      // Remove background first so the cleaned image is what gets uploaded.
+      final bgRemovedFile = await _bgRemoval.removeBackground(file);
+
       await notifier.captureItem(
         userId: userId,
-        imageFile: file,
+        imageFile: bgRemovedFile,
         backgroundRemovedFile: (f) => f,
       );
-
-      // Now run background removal async (the doc is already created above)
-      _bgRemoval.removeBackground(file).then((bgFile) {
-        // Background removal result available but doc already uploaded.
-        // In a real implementation you'd re-upload if different.
-        debugPrint('[Camera] bg removed: ${bgFile.path}');
-      });
     } on CameraException catch (e) {
       debugPrint('[Camera] takePicture error: $e');
       if (mounted) {
